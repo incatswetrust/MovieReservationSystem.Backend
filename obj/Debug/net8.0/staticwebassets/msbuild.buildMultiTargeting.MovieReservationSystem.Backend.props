@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../build/MovieReservationSystem.Backend.props" />
+</Project>
