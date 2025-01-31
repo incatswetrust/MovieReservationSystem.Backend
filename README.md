@@ -1,5 +1,4 @@
 # Movie Reservation System
-https://roadmap.sh/projects/movie-reservation-system
 A Movie Reservation System built with C#, ASP.NET Core, Entity Framework Core, PostgreSQL, and Docker (for the database). The application features JWT-based authentication (stored in an HttpOnly cookie), user roles (Admin and User), and a complete booking workflow for movies, theaters, halls, showtimes, and seats.
 
 ## Main Features
@@ -45,3 +44,4 @@ The API should be available at `https://localhost:5001` or `http://localhost:500
 ### 5. Swagger UI
 Navigate to `/swagger` to explore and test endpoints.
 
+https://roadmap.sh/projects/movie-reservation-system
