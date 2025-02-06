@@ -9,7 +9,7 @@ namespace MovieReservationSystem.Backend.Controllers;
 public class AuthController(IUserService userService, IConfiguration config) : ControllerBase
 {
     [HttpPost("register")]
-    public async Task<IActionResult> Register(UserRegisterDto dto)
+    public async Task<ActionResult<UserReadDto>> Register(UserRegisterDto dto)
     {
         try
         {
@@ -23,7 +23,7 @@ public class AuthController(IUserService userService, IConfiguration config) : C
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login(UserLoginDto dto)
+    public async Task<ActionResult<UserReadDto>> Login(UserLoginDto dto)
     {
         var userRead = await userService.LoginAsync(dto);
         if (userRead == null)

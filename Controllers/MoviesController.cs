@@ -11,7 +11,7 @@ public class MoviesController(IMovieService movieService) : ControllerBase
 {
     [AllowAnonymous]
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<MovieReadDto>>> GetAll()
     {
         var movies = await movieService.GetAllAsync();
         return Ok(movies);
@@ -19,7 +19,7 @@ public class MoviesController(IMovieService movieService) : ControllerBase
 
     [AllowAnonymous]
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<MovieReadDto>> GetById(int id)
     {
         var movie = await movieService.GetByIdAsync(id);
         if (movie == null) return NotFound();
@@ -28,7 +28,7 @@ public class MoviesController(IMovieService movieService) : ControllerBase
 
     [AllowAnonymous]
     [HttpGet("genre/{genre}")]
-    public async Task<IActionResult> GetByGenre(string genre)
+    public async Task<ActionResult<IEnumerable<MovieReadDto>>> GetByGenre(string genre)
     {
         var movies = await movieService.GetByGenreAsync(genre);
         return Ok(movies);
@@ -36,7 +36,7 @@ public class MoviesController(IMovieService movieService) : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> Create(MovieCreateDto dto)
+    public async Task<ActionResult<MovieReadDto>> Create(MovieCreateDto dto)
     {
         var created = await movieService.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
@@ -44,7 +44,7 @@ public class MoviesController(IMovieService movieService) : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, MovieUpdateDto dto)
+    public async Task<ActionResult<MovieReadDto>> Update(int id, MovieUpdateDto dto)
     {
         var updated = await movieService.UpdateAsync(id, dto);
         if (updated == null) return NotFound();
@@ -53,7 +53,7 @@ public class MoviesController(IMovieService movieService) : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
         var success = await movieService.DeleteAsync(id);
         if (!success) return NotFound();

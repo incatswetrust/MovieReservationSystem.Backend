@@ -11,7 +11,7 @@ public class ShowtimesController(IShowtimeService showtimeService) : ControllerB
 {
     [AllowAnonymous]
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetAll()
     {
         var showtimes = await showtimeService.GetAllAsync();
         return Ok(showtimes);
@@ -19,7 +19,7 @@ public class ShowtimesController(IShowtimeService showtimeService) : ControllerB
 
     [AllowAnonymous]
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<ShowtimeReadDto>> GetById(int id)
     {
         var showtime = await showtimeService.GetByIdAsync(id);
         if (showtime == null) return NotFound();
@@ -28,7 +28,7 @@ public class ShowtimesController(IShowtimeService showtimeService) : ControllerB
 
     [AllowAnonymous]
     [HttpGet("movie/{movieId}")]
-    public async Task<IActionResult> GetByMovieId(int movieId)
+    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetByMovieId(int movieId)
     {
         var showtimes = await showtimeService.GetByMovieIdAsync(movieId);
         return Ok(showtimes);
@@ -36,7 +36,7 @@ public class ShowtimesController(IShowtimeService showtimeService) : ControllerB
 
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> Create(ShowtimeCreateDto dto)
+    public async Task<ActionResult<ShowtimeReadDto>> Create(ShowtimeCreateDto dto)
     {
         var created = await showtimeService.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
@@ -44,7 +44,7 @@ public class ShowtimesController(IShowtimeService showtimeService) : ControllerB
 
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, ShowtimeUpdateDto dto)
+    public async Task<ActionResult<ShowtimeReadDto>> Update(int id, ShowtimeUpdateDto dto)
     {
         var updated = await showtimeService.UpdateAsync(id, dto);
         if (updated == null) return NotFound();
@@ -53,7 +53,7 @@ public class ShowtimesController(IShowtimeService showtimeService) : ControllerB
 
     [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
         var success = await showtimeService.DeleteAsync(id);
         if (!success) return NotFound();

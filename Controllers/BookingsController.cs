@@ -12,7 +12,7 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
 {
     [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<BookingReadDto>>> GetAll()
     {
         var allBookings = await bookingService.GetAllAsync();
         return Ok(allBookings);
@@ -20,7 +20,7 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
 
     [Authorize(Roles = "User,Admin")]
     [HttpGet("my")]
-    public async Task<IActionResult> GetMyBookings()
+    public async Task<ActionResult<IEnumerable<BookingReadDto>>> GetMyBookings()
     {
         var userIdStr = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
@@ -32,7 +32,7 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     }
     [Authorize(Roles = "User,Admin")]
     [HttpPost]
-    public async Task<IActionResult> Create(BookingCreateDto dto)
+    public async Task<ActionResult<BookingReadDto>> Create(BookingCreateDto dto)
     {
         var userIdStr = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
@@ -44,7 +44,7 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     }
     [Authorize(Roles = "User,Admin")]
     [HttpPost("{id}/cancel")]
-    public async Task<IActionResult> Cancel(int id)
+    public async Task<ActionResult> Cancel(int id)
     {
         var booking = await bookingService.GetByIdAsync(id);
         if (booking == null) return NotFound("Booking not found");

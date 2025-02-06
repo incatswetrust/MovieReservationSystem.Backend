@@ -148,3 +148,4 @@
 /Users/mac/Desktop/MovieReservationSystem.Backend/MovieReservationSystem.Backend/obj/Debug/net8.0/MovieReservationSystem.Backend.pdb
 /Users/mac/Desktop/MovieReservationSystem.Backend/MovieReservationSystem.Backend/obj/Debug/net8.0/MovieReservationSystem.Backend.genruntimeconfig.cache
 /Users/mac/Desktop/MovieReservationSystem.Backend/MovieReservationSystem.Backend/obj/Debug/net8.0/ref/MovieReservationSystem.Backend.dll
+/Users/mac/Desktop/MovieReservationSystem.Backend/MovieReservationSystem.Backend/obj/Debug/net8.0/MovieReservationSystem.Backend.sourcelink.json

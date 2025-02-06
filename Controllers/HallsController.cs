@@ -11,7 +11,7 @@ public class HallsController(IHallService hallService) : ControllerBase
 {
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<HallReadDto>>> GetAll()
     {
         var halls = await hallService.GetAllAsync();
         return Ok(halls);
@@ -19,7 +19,7 @@ public class HallsController(IHallService hallService) : ControllerBase
 
     [HttpGet("{id}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<HallReadDto>> GetById(int id)
     {
         var hall = await hallService.GetByIdAsync(id);
         if (hall == null) return NotFound();
@@ -28,7 +28,7 @@ public class HallsController(IHallService hallService) : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> Create(HallCreateDto dto)
+    public async Task<ActionResult<HallReadDto>> Create(HallCreateDto dto)
     {
         var created = await hallService.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
@@ -36,7 +36,7 @@ public class HallsController(IHallService hallService) : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, HallUpdateDto dto)
+    public async Task<ActionResult<HallReadDto>> Update(int id, HallUpdateDto dto)
     {
         var updated = await hallService.UpdateAsync(id, dto);
         if (updated == null) return NotFound();
@@ -45,7 +45,7 @@ public class HallsController(IHallService hallService) : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
         var success = await hallService.DeleteAsync(id);
         if (!success) return NotFound();
