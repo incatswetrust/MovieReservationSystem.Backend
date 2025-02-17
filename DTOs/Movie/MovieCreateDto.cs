@@ -7,4 +7,5 @@ public class MovieCreateDto
     public string? Genre { get; set; }
     public int Duration { get; set; }  // Minutes
     public int ReleaseYear { get; set; }
+    public string Base64Image { get; set; }
 }
