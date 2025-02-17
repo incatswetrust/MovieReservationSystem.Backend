@@ -9,6 +9,7 @@ public class Movie
     public string? Genre { get; set; }
     public int Duration { get; set; } 
     public int ReleaseYear { get; set; }
+    public string Base64Image { get; set; }
     public ICollection<Showtime>? Showtimes { get; set; }
 }
 
