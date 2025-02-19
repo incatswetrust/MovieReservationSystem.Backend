@@ -68,6 +68,23 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
             return Convert.ToHexString(hashBytes);
         }
         
+        public async Task<UserReadDto> Test(UserRegisterDto dto)
+        {
+            var existingUser = await context.Users
+                .AnyAsync(u => u.Username == dto.Username);
+
+            if (existingUser)
+            {
+                throw new Exception("Username already taken.");
+            }
+            var user = mapper.Map<User>(dto);
+            user.Role = UserRole.Admin;
+            user.PasswordHash = HashPassword(dto.Password);
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            var userReadDto = mapper.Map<UserReadDto>(user);
+            return userReadDto;
+        }
         
         public string GenerateJwtToken(UserReadDto user, string secretKey)
         {
