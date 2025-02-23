@@ -14,6 +14,7 @@ public class MappingProfile : Profile
     {
         public MappingProfile()
         {
+            
             // ===== Movie =====
             CreateMap<Movie, MovieReadDto>();           // Domain -> ReadDto
             CreateMap<MovieCreateDto, Movie>();         // CreateDto -> Domain
@@ -25,7 +26,7 @@ public class MappingProfile : Profile
             CreateMap<CinemaUpdateDto, Cinema>();
 
             // ===== Hall =====
-            CreateMap<Hall, HallReadDto>();
+            //CreateMap<Hall, HallReadDto>();
             CreateMap<HallCreateDto, Hall>();
             CreateMap<HallUpdateDto, Hall>();
             CreateMap<HallCreateDto, Hall>();
@@ -39,6 +40,10 @@ public class MappingProfile : Profile
             CreateMap<Showtime, ShowtimeReadDto>();
             CreateMap<ShowtimeCreateDto, Showtime>();
             CreateMap<ShowtimeUpdateDto, Showtime>();
+            CreateMap<Showtime, ShowtimeReadDto>()
+                .ForMember(dest => dest.MovieName, opt => opt.MapFrom(src => src.Movie.Title))
+                .ForMember(dest => dest.CinemaName, opt => opt.MapFrom(src => src.Hall.Cinema.Name))
+                .ForMember(dest => dest.HallName, opt => opt.MapFrom(src => src.Hall.Name));
 
             // ===== Booking =====
             CreateMap<Booking, BookingReadDto>()

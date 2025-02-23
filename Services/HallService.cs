@@ -1,8 +1,10 @@
+using System.Collections;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using MovieReservationSystem.Backend.Data;
 using MovieReservationSystem.Backend.Domain;
 using MovieReservationSystem.Backend.DTOs.Hall;
+using MovieReservationSystem.Backend.DTOs.Seat;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
 namespace MovieReservationSystem.Backend.Services;
@@ -18,7 +20,7 @@ public class HallService(AppDbContext context, IMapper mapper) : IHallService
 
     public async Task<HallReadDto?> GetByIdAsync(int id)
     {
-        var hall = await context.Halls
+        var hall = await context.Halls.Include(h => h.Seats)
             .FirstOrDefaultAsync(h => h.Id == id);
         return hall == null ? null : mapper.Map<HallReadDto>(hall);
     }
@@ -77,5 +79,14 @@ public class HallService(AppDbContext context, IMapper mapper) : IHallService
         context.Halls.Remove(hall);
         await context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<IEnumerable<HallReadDto>> GetByCinemaId(int cinemaId)
+    {
+        var halls = context.Halls.Where(hall => hall.CinemaId == cinemaId).Include(h => h.Seats);
+        
+        var s = mapper.Map<IEnumerable<HallReadDto>>(halls);
+
+        return s;
     }
 }

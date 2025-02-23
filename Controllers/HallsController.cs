@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using MovieReservationSystem.Backend.DTOs.Hall;
 using MovieReservationSystem.Backend.Services.Interfaces;
@@ -14,6 +15,15 @@ public class HallsController(IHallService hallService) : ControllerBase
     public async Task<ActionResult<IEnumerable<HallReadDto>>> GetAll()
     {
         var halls = await hallService.GetAllAsync();
+        return Ok(halls);
+    }
+
+    [HttpGet("byCinema/{cinemaId}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<HallReadDto>>> GetByCinemaId(int cinemaId)
+    {
+        var halls = await hallService.GetByCinemaId(cinemaId);
+        if (halls == null) return NotFound();
         return Ok(halls);
     }
 

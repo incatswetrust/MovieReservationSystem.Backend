@@ -9,4 +9,5 @@ public interface IHallService
     Task<HallReadDto> CreateAsync(HallCreateDto dto);
     Task<HallReadDto?> UpdateAsync(int id, HallUpdateDto dto);
     Task<bool> DeleteAsync(int id);
+    Task<IEnumerable<HallReadDto>> GetByCinemaId(int cinemaId);
 }

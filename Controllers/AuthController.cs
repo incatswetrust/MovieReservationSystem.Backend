@@ -29,6 +29,16 @@ public class AuthController(IUserService userService, IConfiguration config) : C
         try
         {
             var userRead = await userService.RegisterAsync(dto);
+            var secretKey = config["JwtSettings:SecretKey"];
+            var token = userService.GenerateJwtToken(userRead, secretKey);
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false, // на prod обычно true
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(2)
+            };
+            Response.Cookies.Append("X-Access-Token", token, cookieOptions);
             return Ok(userRead);
         }
         catch (Exception ex)
