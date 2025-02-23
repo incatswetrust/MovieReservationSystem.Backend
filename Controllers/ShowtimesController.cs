@@ -33,6 +33,14 @@ public class ShowtimesController(IShowtimeService showtimeService) : ControllerB
         var showtimes = await showtimeService.GetByMovieIdAsync(movieId);
         return Ok(showtimes);
     }
+    
+    [AllowAnonymous]
+    [HttpGet("hall/{movieId}")]
+    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetByHallId(int movieId)
+    {
+        var showtimes = await showtimeService.GetByHallIdAsync(movieId);
+        return Ok(showtimes);
+    }
 
     [Authorize(Roles = "Admin")]
     [HttpPost]

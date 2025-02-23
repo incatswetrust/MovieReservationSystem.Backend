@@ -10,4 +10,5 @@ public interface IShowtimeService
     Task<ShowtimeReadDto?> UpdateAsync(int id, ShowtimeUpdateDto dto);
     Task<bool> DeleteAsync(int id);
     Task<IEnumerable<ShowtimeReadDto>> GetByMovieIdAsync(int movieId);
+    Task<IEnumerable<ShowtimeReadDto>> GetByHallIdAsync(int hallId);
 }
