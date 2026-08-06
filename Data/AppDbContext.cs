@@ -13,9 +13,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<BookedSeat> BookedSeats { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Seat> Seats { get; set; } = null!;
-    
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasIndex(rt => rt.Token)
+            .IsUnique();
     }
 }

@@ -5,10 +5,13 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using MovieReservationSystem.Backend.Data;
 using MovieReservationSystem.Backend.Mapping;
+using MovieReservationSystem.Backend.Middleware;
 using MovieReservationSystem.Backend.Services;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+
+const string CorsPolicy = "DevCors";
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -62,7 +65,18 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization(); 
+builder.Services.AddAuthorization();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicy, policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
 builder.Services.AddControllers();
 
@@ -88,6 +102,10 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+
+app.UseMiddleware<ExceptionHandlerMiddleware>();
+
+app.UseCors(CorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();

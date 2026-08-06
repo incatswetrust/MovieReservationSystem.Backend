@@ -1,8 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using AutoMapper;
+using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MovieReservationSystem.Backend.Data;
@@ -36,8 +36,7 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
                 .FirstOrDefaultAsync(u => u.Username == dto.Username);
 
             if (user == null) return null;
-            var hash = HashPassword(dto.Password);
-            return user.PasswordHash != hash ? null : mapper.Map<UserReadDto>(user);
+            return !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash) ? null : mapper.Map<UserReadDto>(user);
         }
         public async Task<IEnumerable<UserReadDto>> GetAllAsync()
         {
@@ -62,30 +61,9 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
         }
         private string HashPassword(string password)
         {
-            using var sha = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(password);
-            var hashBytes = sha.ComputeHash(bytes);
-            return Convert.ToHexString(hashBytes);
+            return BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
         }
-        
-        public async Task<UserReadDto> Test(UserRegisterDto dto)
-        {
-            var existingUser = await context.Users
-                .AnyAsync(u => u.Username == dto.Username);
 
-            if (existingUser)
-            {
-                throw new Exception("Username already taken.");
-            }
-            var user = mapper.Map<User>(dto);
-            user.Role = UserRole.Admin;
-            user.PasswordHash = HashPassword(dto.Password);
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
-            var userReadDto = mapper.Map<UserReadDto>(user);
-            return userReadDto;
-        }
-        
         public string GenerateJwtToken(UserReadDto user, string secretKey)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
