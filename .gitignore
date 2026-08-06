@@ -1,0 +1,16 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+
+## IDE
+.vs/
+.idea/
+*.swp
+
+## OS
+.DS_Store
+
+## Logs
+*.log
