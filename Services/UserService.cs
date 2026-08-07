@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using AutoMapper;
 using BCrypt.Net;
@@ -62,6 +63,20 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
         private string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
+        }
+
+        public async Task<string> GenerateRefreshTokenAsync(int userId)
+        {
+            var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            context.RefreshTokens.Add(new RefreshToken
+            {
+                Token = token,
+                UserId = userId,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false
+            });
+            await context.SaveChangesAsync();
+            return token;
         }
 
         public string GenerateJwtToken(UserReadDto user, string secretKey)
