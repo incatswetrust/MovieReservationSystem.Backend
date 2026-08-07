@@ -26,7 +26,7 @@ public class AuthController(IUserService userService, IConfiguration config) : C
     [HttpPost("register")]
     public async Task<ActionResult<UserReadDto>> Register(UserRegisterDto dto)
     {
-        var userRead = await userService.RegisterAsync(dto);
+        var (userRead, refreshToken) = await userService.RegisterAsync(dto);
         var secretKey = config["JwtSettings:SecretKey"];
         var token = userService.GenerateJwtToken(userRead, secretKey);
         var cookieOptions = new CookieOptions
@@ -37,15 +37,17 @@ public class AuthController(IUserService userService, IConfiguration config) : C
             Expires = DateTime.UtcNow.AddHours(2)
         };
         Response.Cookies.Append("X-Access-Token", token, cookieOptions);
+        Response.Cookies.Append("X-Refresh-Token", refreshToken, RefreshTokenCookieOptions());
         return Ok(userRead);
     }
 
     [HttpPost("login")]
     public async Task<ActionResult<UserReadDto>> Login(UserLoginDto dto)
     {
-        var userRead = await userService.LoginAsync(dto);
-        if (userRead == null)
+        var result = await userService.LoginAsync(dto);
+        if (result == null)
             return Unauthorized("Invalid username or password.");
+        var (userRead, refreshToken) = result.Value;
         var secretKey = config["JwtSettings:SecretKey"];
         var token = userService.GenerateJwtToken(userRead, secretKey);
         var cookieOptions = new CookieOptions
@@ -56,14 +58,55 @@ public class AuthController(IUserService userService, IConfiguration config) : C
             Expires = DateTime.UtcNow.AddHours(2)
         };
         Response.Cookies.Append("X-Access-Token", token, cookieOptions);
+        Response.Cookies.Append("X-Refresh-Token", refreshToken, RefreshTokenCookieOptions());
 
-        return Ok(userRead); 
+        return Ok(userRead);
     }
 
-    [HttpPost("logout")]
-    public IActionResult Logout()
+    [HttpPost("refresh")]
+    public async Task<ActionResult<UserReadDto>> Refresh()
     {
+        var refreshToken = Request.Cookies["X-Refresh-Token"];
+        if (string.IsNullOrEmpty(refreshToken))
+            return Unauthorized();
+
+        var result = await userService.RefreshTokenAsync(refreshToken);
+        if (result == null)
+            return Unauthorized();
+
+        var (userRead, newRefreshToken) = result.Value;
+        var secretKey = config["JwtSettings:SecretKey"];
+        var token = userService.GenerateJwtToken(userRead, secretKey);
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false, // на prod обычно true
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddHours(2)
+        };
+        Response.Cookies.Append("X-Access-Token", token, cookieOptions);
+        Response.Cookies.Append("X-Refresh-Token", newRefreshToken, RefreshTokenCookieOptions());
+
+        return Ok(userRead);
+    }
+
+    private static CookieOptions RefreshTokenCookieOptions() => new()
+    {
+        HttpOnly = true,
+        Secure = false, // на prod обычно true
+        SameSite = SameSiteMode.Strict,
+        Expires = DateTime.UtcNow.AddDays(7)
+    };
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var refreshToken = Request.Cookies["X-Refresh-Token"];
+        if (!string.IsNullOrEmpty(refreshToken))
+            await userService.RevokeRefreshTokenAsync(refreshToken);
+
         Response.Cookies.Delete("X-Access-Token");
+        Response.Cookies.Delete("X-Refresh-Token");
         return Ok("Logged out");
     }
 }
