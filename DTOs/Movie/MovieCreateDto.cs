@@ -15,4 +15,14 @@ public class MovieCreateDto
     [Range(1900, 2100)]
     public int ReleaseYear { get; set; }
     public string Base64Image { get; set; }
+    public string? Director { get; set; }
+    public string? Cast { get; set; }
+    public string? Language { get; set; }
+    public string? Country { get; set; }
+    public string? AgeRating { get; set; }
+    public string? TrailerUrl { get; set; }
+
+    [Range(0.0, 10.0)]
+    public decimal? ImdbRating { get; set; }
+    public string? PosterUrl { get; set; }
 }
