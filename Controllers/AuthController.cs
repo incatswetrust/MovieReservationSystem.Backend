@@ -99,9 +99,14 @@ public class AuthController(IUserService userService, IConfiguration config) : C
     };
 
     [HttpPost("logout")]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
+        var refreshToken = Request.Cookies["X-Refresh-Token"];
+        if (!string.IsNullOrEmpty(refreshToken))
+            await userService.RevokeRefreshTokenAsync(refreshToken);
+
         Response.Cookies.Delete("X-Access-Token");
+        Response.Cookies.Delete("X-Refresh-Token");
         return Ok("Logged out");
     }
 }
