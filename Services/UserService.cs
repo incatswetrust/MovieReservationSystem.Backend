@@ -84,6 +84,22 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
             return token;
         }
 
+        public async Task<(UserReadDto User, string RefreshToken)?> RefreshTokenAsync(string refreshToken)
+        {
+            var existing = await context.RefreshTokens
+                .Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+            if (existing?.User == null || existing.IsRevoked || existing.ExpiresAt < DateTime.UtcNow)
+                return null;
+
+            existing.IsRevoked = true;
+            var newToken = await GenerateRefreshTokenAsync(existing.UserId);
+
+            var userReadDto = mapper.Map<UserReadDto>(existing.User);
+            return (userReadDto, newToken);
+        }
+
         public string GenerateJwtToken(UserReadDto user, string secretKey)
         {
             var tokenHandler = new JwtSecurityTokenHandler();

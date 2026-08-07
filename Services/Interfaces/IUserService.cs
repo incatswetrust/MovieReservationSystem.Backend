@@ -12,4 +12,5 @@ public interface IUserService
     Task<UserReadDto?> GetByIdAsync(int id);
     Task<bool> DeleteAsync(int id);
     Task<string> GenerateRefreshTokenAsync(int userId);
+    Task<(UserReadDto User, string RefreshToken)?> RefreshTokenAsync(string refreshToken);
 }
