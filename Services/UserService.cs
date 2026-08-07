@@ -15,7 +15,7 @@ namespace MovieReservationSystem.Backend.Services;
 
 public class UserService(AppDbContext context, IMapper mapper) : IUserService
 {
-        public async Task<UserReadDto> RegisterAsync(UserRegisterDto dto)
+        public async Task<(UserReadDto User, string RefreshToken)> RegisterAsync(UserRegisterDto dto)
         {
             var existingUser = await context.Users
                 .AnyAsync(u => u.Username == dto.Username);
@@ -29,15 +29,20 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
             context.Users.Add(user);
             await context.SaveChangesAsync();
             var userReadDto = mapper.Map<UserReadDto>(user);
-            return userReadDto;
+            var refreshToken = await GenerateRefreshTokenAsync(user.Id);
+            return (userReadDto, refreshToken);
         }
-        public async Task<UserReadDto?> LoginAsync(UserLoginDto dto)
+        public async Task<(UserReadDto User, string RefreshToken)?> LoginAsync(UserLoginDto dto)
         {
             var user = await context.Users
                 .FirstOrDefaultAsync(u => u.Username == dto.Username);
 
             if (user == null) return null;
-            return !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash) ? null : mapper.Map<UserReadDto>(user);
+            if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash)) return null;
+
+            var userReadDto = mapper.Map<UserReadDto>(user);
+            var refreshToken = await GenerateRefreshTokenAsync(user.Id);
+            return (userReadDto, refreshToken);
         }
         public async Task<IEnumerable<UserReadDto>> GetAllAsync()
         {
