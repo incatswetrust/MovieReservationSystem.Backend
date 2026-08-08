@@ -2,13 +2,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using MovieReservationSystem.Backend.DTOs.Hall;
+using MovieReservationSystem.Backend.DTOs.HallImage;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
 namespace MovieReservationSystem.Backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class HallsController(IHallService hallService) : ControllerBase
+public class HallsController(IHallService hallService, IHallImageService hallImageService) : ControllerBase
 {
     [HttpGet]
     [AllowAnonymous]
@@ -58,6 +59,31 @@ public class HallsController(IHallService hallService) : ControllerBase
     public async Task<ActionResult> Delete(int id)
     {
         var success = await hallService.DeleteAsync(id);
+        if (!success) return NotFound();
+        return NoContent();
+    }
+
+    [HttpGet("{id}/images")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<HallImageReadDto>>> GetImages(int id)
+    {
+        var images = await hallImageService.GetByHallIdAsync(id);
+        return Ok(images);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("{id}/images")]
+    public async Task<ActionResult<HallImageReadDto>> AddImage(int id, HallImageCreateDto dto)
+    {
+        var created = await hallImageService.CreateAsync(id, dto);
+        return CreatedAtAction(nameof(GetImages), new { id }, created);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpDelete("{id}/images/{imageId}")]
+    public async Task<ActionResult> DeleteImage(int id, int imageId)
+    {
+        var success = await hallImageService.DeleteAsync(id, imageId);
         if (!success) return NotFound();
         return NoContent();
     }

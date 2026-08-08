@@ -11,5 +11,8 @@ public class UserRegisterDto
     [Required, MinLength(8)]
     public string Password { get; set; } = null!;
 
+    [EmailAddress]
+    public string? Email { get; set; }
+
     public UserRole Role { get; set; }
 }

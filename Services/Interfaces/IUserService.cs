@@ -14,4 +14,5 @@ public interface IUserService
     Task<string> GenerateRefreshTokenAsync(int userId);
     Task<(UserReadDto User, string RefreshToken)?> RefreshTokenAsync(string refreshToken);
     Task RevokeRefreshTokenAsync(string refreshToken);
+    Task<(UserReadDto User, string RefreshToken)> FindOrCreateGoogleUserAsync(string email, string googleId);
 }

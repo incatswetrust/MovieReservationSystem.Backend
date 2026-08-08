@@ -1,3 +1,4 @@
+using MovieReservationSystem.Backend.DTOs.HallImage;
 using MovieReservationSystem.Backend.DTOs.Seat;
 
 namespace MovieReservationSystem.Backend.DTOs.Hall;
@@ -8,4 +9,5 @@ public class HallReadDto
     public string Name { get; set; } = null!;
     public int CinemaId { get; set; }
     public List<SeatReadDto>? Seats { get; set; }
+    public List<HallImageReadDto>? Images { get; set; }
 }
