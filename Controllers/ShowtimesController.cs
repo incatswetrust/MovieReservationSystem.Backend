@@ -11,59 +11,59 @@ public class ShowtimesController(IShowtimeService showtimeService) : ControllerB
 {
     [AllowAnonymous]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetAll()
+    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetAll(CancellationToken cancellationToken)
     {
-        var showtimes = await showtimeService.GetAllAsync();
+        var showtimes = await showtimeService.GetAllAsync(cancellationToken);
         return Ok(showtimes);
     }
 
     [AllowAnonymous]
     [HttpGet("{id}")]
-    public async Task<ActionResult<ShowtimeReadDto>> GetById(int id)
+    public async Task<ActionResult<ShowtimeReadDto>> GetById(int id, CancellationToken cancellationToken)
     {
-        var showtime = await showtimeService.GetByIdAsync(id);
+        var showtime = await showtimeService.GetByIdAsync(id, cancellationToken);
         if (showtime == null) return NotFound();
         return Ok(showtime);
     }
 
     [AllowAnonymous]
     [HttpGet("movie/{movieId}")]
-    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetByMovieId(int movieId)
+    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetByMovieId(int movieId, CancellationToken cancellationToken)
     {
-        var showtimes = await showtimeService.GetByMovieIdAsync(movieId);
+        var showtimes = await showtimeService.GetByMovieIdAsync(movieId, cancellationToken);
         return Ok(showtimes);
     }
-    
+
     [AllowAnonymous]
     [HttpGet("hall/{movieId}")]
-    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetByHallId(int movieId)
+    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetByHallId(int movieId, CancellationToken cancellationToken)
     {
-        var showtimes = await showtimeService.GetByHallIdAsync(movieId);
+        var showtimes = await showtimeService.GetByHallIdAsync(movieId, cancellationToken);
         return Ok(showtimes);
     }
 
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<ActionResult<ShowtimeReadDto>> Create(ShowtimeCreateDto dto)
+    public async Task<ActionResult<ShowtimeReadDto>> Create(ShowtimeCreateDto dto, CancellationToken cancellationToken)
     {
-        var created = await showtimeService.CreateAsync(dto);
+        var created = await showtimeService.CreateAsync(dto, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
-    public async Task<ActionResult<ShowtimeReadDto>> Update(int id, ShowtimeUpdateDto dto)
+    public async Task<ActionResult<ShowtimeReadDto>> Update(int id, ShowtimeUpdateDto dto, CancellationToken cancellationToken)
     {
-        var updated = await showtimeService.UpdateAsync(id, dto);
+        var updated = await showtimeService.UpdateAsync(id, dto, cancellationToken);
         if (updated == null) return NotFound();
         return Ok(updated);
     }
 
     [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(int id)
+    public async Task<ActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        var success = await showtimeService.DeleteAsync(id);
+        var success = await showtimeService.DeleteAsync(id, cancellationToken);
         if (!success) return NotFound();
         return NoContent();
     }

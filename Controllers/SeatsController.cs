@@ -12,9 +12,9 @@ public class SeatsController(ISeatService seatService): ControllerBase
 {
     [AllowAnonymous]
     [HttpGet("{id}")]
-    public async Task<ActionResult<IEnumerable<MovieReadDto>>> GetAll(int id)
+    public async Task<ActionResult<IEnumerable<MovieReadDto>>> GetAll(int id, CancellationToken cancellationToken)
     {
-        var seats = await seatService.GetSeatsByShowtimeAsync(id);
+        var seats = await seatService.GetSeatsByShowtimeAsync(id, cancellationToken);
         return Ok(seats);
     }
 }
