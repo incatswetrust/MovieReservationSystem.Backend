@@ -35,6 +35,23 @@ public class MoviesController(IMovieService movieService) : ControllerBase
         return Ok(movies);
     }
 
+    [AllowAnonymous]
+    [HttpGet("search")]
+    public async Task<ActionResult<IEnumerable<MovieReadDto>>> Search([FromQuery] string q, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(q)) return Ok(Enumerable.Empty<MovieReadDto>());
+        var movies = await movieService.SearchAsync(q, cancellationToken);
+        return Ok(movies);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("filter")]
+    public async Task<ActionResult<IEnumerable<MovieReadDto>>> Filter([FromQuery] string? genre, [FromQuery] int? year, [FromQuery] string? rating, CancellationToken cancellationToken)
+    {
+        var movies = await movieService.FilterAsync(genre, year, rating, cancellationToken);
+        return Ok(movies);
+    }
+
     [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<MovieReadDto>> Create(MovieCreateDto dto, CancellationToken cancellationToken)

@@ -12,4 +12,6 @@ public interface IMovieService
     Task<MovieReadDto?> UpdateAsync(int id, MovieUpdateDto dto, CancellationToken cancellationToken);
     Task<bool> DeleteAsync(int id, CancellationToken cancellationToken);
     Task<IEnumerable<MovieReadDto>> GetByGenreAsync(string genre, CancellationToken cancellationToken);
+    Task<IEnumerable<MovieReadDto>> SearchAsync(string q, CancellationToken cancellationToken);
+    Task<IEnumerable<MovieReadDto>> FilterAsync(string? genre, int? year, string? rating, CancellationToken cancellationToken);
 }

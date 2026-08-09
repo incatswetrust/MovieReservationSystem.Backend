@@ -83,4 +83,32 @@ public class MovieService(AppDbContext context, IMapper mapper) : IMovieService
 
             return mapper.Map<IEnumerable<MovieReadDto>>(movies);
         }
+
+        public async Task<IEnumerable<MovieReadDto>> SearchAsync(string q, CancellationToken cancellationToken)
+        {
+            var movies = await context.Movies
+                .AsNoTracking()
+                .Where(m => EF.Functions.Like(m.Title, $"%{q}%") ||
+                            (m.Director != null && EF.Functions.Like(m.Director, $"%{q}%")))
+                .ToListAsync(cancellationToken);
+
+            return mapper.Map<IEnumerable<MovieReadDto>>(movies);
+        }
+
+        public async Task<IEnumerable<MovieReadDto>> FilterAsync(string? genre, int? year, string? rating, CancellationToken cancellationToken)
+        {
+            var query = context.Movies.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(genre))
+                query = query.Where(m => m.Genre != null && m.Genre == genre);
+
+            if (year.HasValue)
+                query = query.Where(m => m.ReleaseYear == year.Value);
+
+            if (!string.IsNullOrWhiteSpace(rating))
+                query = query.Where(m => m.AgeRating != null && m.AgeRating == rating);
+
+            var movies = await query.ToListAsync(cancellationToken);
+            return mapper.Map<IEnumerable<MovieReadDto>>(movies);
+        }
     }
