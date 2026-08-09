@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.User;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
@@ -50,7 +51,7 @@ public class AuthController(IUserService userService, IConfiguration config) : C
     {
         var result = await userService.LoginAsync(dto, cancellationToken);
         if (result == null)
-            return Unauthorized("Invalid username or password.");
+            return Unauthorized(new ErrorResponse("Invalid username or password."));
         var (userRead, refreshToken) = result.Value;
         var secretKey = config["JwtSettings:SecretKey"];
         var token = userService.GenerateJwtToken(userRead, secretKey);

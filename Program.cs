@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -9,6 +10,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 using MovieReservationSystem.Backend.Data;
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.Mapping;
 using MovieReservationSystem.Backend.Middleware;
 using MovieReservationSystem.Backend.Services;
@@ -99,6 +101,21 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddControllers();
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var details = context.ModelState
+            .Where(e => e.Value?.Errors.Count > 0)
+            .ToDictionary(
+                e => e.Key,
+                e => e.Value!.Errors.Select(err => err.ErrorMessage).ToArray()
+            );
+
+        return new BadRequestObjectResult(new ErrorResponse("Validation failed", details));
+    };
+});
 
 const string AnonymousRateLimitPolicy = "AnonymousRateLimit";
 const string AuthenticatedRateLimitPolicy = "AuthenticatedRateLimit";

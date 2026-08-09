@@ -24,7 +24,7 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     public async Task<ActionResult<IEnumerable<BookingReadDto>>> GetMyBookings(CancellationToken cancellationToken)
     {
         var userIdStr = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized(new ErrorResponse("User is not authenticated"));
         var userId = int.Parse(userIdStr);
         var all = await bookingService.GetAllAsync(cancellationToken);
         var myBookings = all.Where(b => b.UserId == userId);
@@ -36,7 +36,7 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     public async Task<ActionResult<BookingReadDto>> Create(BookingCreateDto dto, CancellationToken cancellationToken)
     {
         var userIdStr = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized(new ErrorResponse("User is not authenticated"));
 
         dto.UserId = int.Parse(userIdStr);
 
@@ -48,16 +48,16 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     public async Task<ActionResult> Cancel(int id, CancellationToken cancellationToken)
     {
         var booking = await bookingService.GetByIdAsync(id, cancellationToken);
-        if (booking == null) return NotFound("Booking not found");
+        if (booking == null) return NotFound(new ErrorResponse("Booking not found"));
         var currentUserId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         var currentRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
         if (currentRole != "Admin" && booking.UserId.ToString() != currentUserId)
         {
-            return Forbid("You can only cancel your own bookings.");
+            return StatusCode(StatusCodes.Status403Forbidden, new ErrorResponse("You can only cancel your own bookings."));
         }
 
         var success = await bookingService.CancelAsync(id, cancellationToken);
-        if (!success) return BadRequest("Could not cancel booking.");
-        return Ok("Booking canceled.");
+        if (!success) return BadRequest(new ErrorResponse("Could not cancel booking."));
+        return Ok(new { message = "Booking canceled." });
     }
 }

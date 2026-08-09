@@ -1,9 +1,10 @@
 using System.Net;
 using System.Text.Json;
+using MovieReservationSystem.Backend.DTOs;
 
 namespace MovieReservationSystem.Backend.Middleware;
 
-public class ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger)
+public class ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger, IHostEnvironment env)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -18,7 +19,10 @@ public class ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionH
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 
-            var payload = JsonSerializer.Serialize(new { error = ex.Message });
+            var details = env.IsDevelopment()
+                ? new { type = ex.GetType().Name, stackTrace = ex.StackTrace }
+                : null;
+            var payload = JsonSerializer.Serialize(new ErrorResponse(ex.Message, details));
             await context.Response.WriteAsync(payload);
         }
     }

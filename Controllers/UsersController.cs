@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.User;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
@@ -29,7 +30,7 @@ public class UsersController(IUserService userService) : ControllerBase
     public async Task<ActionResult<UserReadDto>> Delete(int id, CancellationToken cancellationToken)
     {
         var success = await userService.DeleteAsync(id, cancellationToken);
-        if (!success) return NotFound("User not found");
+        if (!success) return NotFound(new ErrorResponse("User not found"));
         return NoContent();
     }
 }
