@@ -12,41 +12,41 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
 {
     [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<BookingReadDto>>> GetAll()
+    public async Task<ActionResult<IEnumerable<BookingReadDto>>> GetAll(CancellationToken cancellationToken)
     {
-        var allBookings = await bookingService.GetAllAsync();
+        var allBookings = await bookingService.GetAllAsync(cancellationToken);
         return Ok(allBookings);
     }
 
     [Authorize(Roles = "User,Admin")]
     [HttpGet("my")]
-    public async Task<ActionResult<IEnumerable<BookingReadDto>>> GetMyBookings()
+    public async Task<ActionResult<IEnumerable<BookingReadDto>>> GetMyBookings(CancellationToken cancellationToken)
     {
         var userIdStr = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
         var userId = int.Parse(userIdStr);
-        var all = await bookingService.GetAllAsync();
+        var all = await bookingService.GetAllAsync(cancellationToken);
         var myBookings = all.Where(b => b.UserId == userId);
 
         return Ok(myBookings);
     }
     [Authorize(Roles = "User,Admin")]
     [HttpPost]
-    public async Task<ActionResult<BookingReadDto>> Create(BookingCreateDto dto)
+    public async Task<ActionResult<BookingReadDto>> Create(BookingCreateDto dto, CancellationToken cancellationToken)
     {
         var userIdStr = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
         dto.UserId = int.Parse(userIdStr);
 
-        var createdBooking = await bookingService.CreateAsync(dto);
+        var createdBooking = await bookingService.CreateAsync(dto, cancellationToken);
         return Ok(createdBooking);
     }
     [Authorize(Roles = "User,Admin")]
     [HttpPost("{id}/cancel")]
-    public async Task<ActionResult> Cancel(int id)
+    public async Task<ActionResult> Cancel(int id, CancellationToken cancellationToken)
     {
-        var booking = await bookingService.GetByIdAsync(id);
+        var booking = await bookingService.GetByIdAsync(id, cancellationToken);
         if (booking == null) return NotFound("Booking not found");
         var currentUserId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         var currentRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
@@ -55,7 +55,7 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
             return Forbid("You can only cancel your own bookings.");
         }
 
-        var success = await bookingService.CancelAsync(id);
+        var success = await bookingService.CancelAsync(id, cancellationToken);
         if (!success) return BadRequest("Could not cancel booking.");
         return Ok("Booking canceled.");
     }
