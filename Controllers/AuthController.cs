@@ -167,6 +167,7 @@ public class AuthController(IUserService userService, IConfiguration config) : C
         Response.Cookies.Append("X-Access-Token", token, cookieOptions);
         Response.Cookies.Append("X-Refresh-Token", refreshToken, RefreshTokenCookieOptions());
 
-        return Redirect("http://localhost:5173");
+        var frontendUrl = config["Cors:ProdOrigin"];
+        return Redirect(string.IsNullOrWhiteSpace(frontendUrl) ? "http://localhost:5173" : frontendUrl);
     }
 }

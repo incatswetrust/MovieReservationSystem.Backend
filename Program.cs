@@ -43,7 +43,7 @@ builder.Services.AddSwaggerGen(options =>
 var jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"];
 var keyBytes = Encoding.UTF8.GetBytes(jwtSecretKey);
 
-builder.Services.AddAuthentication(options =>
+var authenticationBuilder = builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -63,7 +63,7 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 
-    
+
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -76,14 +76,26 @@ builder.Services.AddAuthentication(options =>
             return Task.CompletedTask;
         }
     };
-})
-.AddCookie(ExternalAuthScheme)
-.AddGoogle(options =>
-{
-    options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? string.Empty;
-    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
-    options.SignInScheme = ExternalAuthScheme;
 });
+
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+
+// Google's OAuth handler is a request-handler scheme: UseAuthentication() probes it on
+// every request (to match its callback path), which throws if ClientId/ClientSecret are
+// missing. Only register it when both are actually configured, so an unconfigured Google
+// login doesn't take down the entire API.
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authenticationBuilder
+        .AddCookie(ExternalAuthScheme)
+        .AddGoogle(options =>
+        {
+            options.ClientId = googleClientId;
+            options.ClientSecret = googleClientSecret;
+            options.SignInScheme = ExternalAuthScheme;
+        });
+}
 
 builder.Services.AddAuthorization();
 
