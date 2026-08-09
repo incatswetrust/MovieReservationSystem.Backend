@@ -25,6 +25,7 @@ public class AuthController(IUserService userService, IConfiguration config) : C
         if (user == null) return NotFound();
         return Ok(user);
     }
+    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<ActionResult<UserReadDto>> Register(UserRegisterDto dto, CancellationToken cancellationToken)
     {
@@ -43,6 +44,7 @@ public class AuthController(IUserService userService, IConfiguration config) : C
         return Ok(userRead);
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<UserReadDto>> Login(UserLoginDto dto, CancellationToken cancellationToken)
     {
@@ -65,6 +67,7 @@ public class AuthController(IUserService userService, IConfiguration config) : C
         return Ok(userRead);
     }
 
+    [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<ActionResult<UserReadDto>> Refresh(CancellationToken cancellationToken)
     {
@@ -100,6 +103,7 @@ public class AuthController(IUserService userService, IConfiguration config) : C
         Expires = DateTime.UtcNow.AddDays(7)
     };
 
+    [AllowAnonymous]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
@@ -112,6 +116,7 @@ public class AuthController(IUserService userService, IConfiguration config) : C
         return Ok("Logged out");
     }
 
+    [AllowAnonymous]
     [HttpGet("google")]
     public IActionResult GoogleLogin()
     {
@@ -120,6 +125,7 @@ public class AuthController(IUserService userService, IConfiguration config) : C
         return Challenge(properties, GoogleDefaults.AuthenticationScheme);
     }
 
+    [AllowAnonymous]
     [HttpGet("google/callback")]
     public async Task<IActionResult> GoogleCallback(CancellationToken cancellationToken)
     {
