@@ -94,6 +94,17 @@ if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(goo
             options.ClientId = googleClientId;
             options.ClientSecret = googleClientSecret;
             options.SignInScheme = ExternalAuthScheme;
+
+            // TEMPORARY diagnostics: surface the real remote-auth failure instead of the
+            // generic "An error was encountered while handling the remote login." wrapper.
+            // Remove once the Google login flow is confirmed working end to end.
+            options.Events.OnRemoteFailure = context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = 200;
+                context.Response.ContentType = "text/plain";
+                return context.Response.WriteAsync(context.Failure?.ToString() ?? "Unknown remote failure");
+            };
         });
 }
 
