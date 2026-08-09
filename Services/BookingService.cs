@@ -14,10 +14,10 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
         {
             var bookings = await context.Bookings
                 .AsNoTracking()
+                .Include(b => b.BookedSeats)
                 .ToListAsync(cancellationToken);
 
-            var result = mapper.Map<IEnumerable<BookingReadDto>>(bookings);
-            return result;
+            return MapWithSeatIds(bookings);
         }
 
         public async Task<PagedResult<BookingReadDto>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken)
@@ -28,17 +28,29 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
             var query = context.Bookings.AsNoTracking().OrderBy(b => b.Id);
             var total = await query.CountAsync(cancellationToken);
             var bookings = await query
+                .Include(b => b.BookedSeats)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);
 
             return new PagedResult<BookingReadDto>
             {
-                Items = mapper.Map<List<BookingReadDto>>(bookings),
+                Items = MapWithSeatIds(bookings).ToList(),
                 Total = total,
                 Page = page,
                 PageSize = pageSize
             };
+        }
+
+        private IEnumerable<BookingReadDto> MapWithSeatIds(IEnumerable<Booking> bookings)
+        {
+            foreach (var booking in bookings)
+            {
+                var dto = mapper.Map<BookingReadDto>(booking);
+                if (booking.BookedSeats != null)
+                    dto.SeatIds = booking.BookedSeats.Select(bs => bs.SeatId).ToList();
+                yield return dto;
+            }
         }
 
         public async Task<BookingReadDto?> GetByIdAsync(int id, CancellationToken cancellationToken)
