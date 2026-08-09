@@ -35,10 +35,10 @@ public class ShowtimesController(IShowtimeService showtimeService) : ControllerB
     }
 
     [AllowAnonymous]
-    [HttpGet("hall/{movieId}")]
-    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetByHallId(int movieId, CancellationToken cancellationToken)
+    [HttpGet("hall/{hallId}")]
+    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetByHallId(int hallId, CancellationToken cancellationToken)
     {
-        var showtimes = await showtimeService.GetByHallIdAsync(movieId, cancellationToken);
+        var showtimes = await showtimeService.GetByHallIdAsync(hallId, cancellationToken);
         return Ok(showtimes);
     }
 
