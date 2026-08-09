@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MovieReservationSystem.Backend.DTOs.User;
@@ -108,5 +110,43 @@ public class AuthController(IUserService userService, IConfiguration config) : C
         Response.Cookies.Delete("X-Access-Token");
         Response.Cookies.Delete("X-Refresh-Token");
         return Ok("Logged out");
+    }
+
+    [HttpGet("google")]
+    public IActionResult GoogleLogin()
+    {
+        var redirectUrl = Url.Action(nameof(GoogleCallback));
+        var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+    }
+
+    [HttpGet("google/callback")]
+    public async Task<IActionResult> GoogleCallback()
+    {
+        var authResult = await HttpContext.AuthenticateAsync("External");
+        if (!authResult.Succeeded || authResult.Principal == null)
+            return Unauthorized();
+
+        var email = authResult.Principal.FindFirstValue(ClaimTypes.Email);
+        var googleId = authResult.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        await HttpContext.SignOutAsync("External");
+
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(googleId))
+            return Unauthorized();
+
+        var (userRead, refreshToken) = await userService.FindOrCreateGoogleUserAsync(email, googleId);
+        var secretKey = config["JwtSettings:SecretKey"];
+        var token = userService.GenerateJwtToken(userRead, secretKey);
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false, // на prod обычно true
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddHours(2)
+        };
+        Response.Cookies.Append("X-Access-Token", token, cookieOptions);
+        Response.Cookies.Append("X-Refresh-Token", refreshToken, RefreshTokenCookieOptions());
+
+        return Redirect("http://localhost:5173");
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MovieReservationSystem.Backend.Data;
 
@@ -11,9 +12,11 @@ using MovieReservationSystem.Backend.Data;
 namespace MovieReservationSystem.Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260808075714_AddGoogleIdToUser")]
+    partial class AddGoogleIdToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -119,34 +122,6 @@ namespace MovieReservationSystem.Backend.Migrations
                     b.HasIndex("CinemaId");
 
                     b.ToTable("Halls");
-                });
-
-            modelBuilder.Entity("MovieReservationSystem.Backend.Domain.HallImage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Caption")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("HallId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HallId");
-
-                    b.ToTable("HallImages");
                 });
 
             modelBuilder.Entity("MovieReservationSystem.Backend.Domain.Movie", b =>
@@ -306,6 +281,7 @@ namespace MovieReservationSystem.Backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PasswordHash")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Role")
@@ -361,17 +337,6 @@ namespace MovieReservationSystem.Backend.Migrations
                     b.Navigation("Cinema");
                 });
 
-            modelBuilder.Entity("MovieReservationSystem.Backend.Domain.HallImage", b =>
-                {
-                    b.HasOne("MovieReservationSystem.Backend.Domain.Hall", "Hall")
-                        .WithMany("Images")
-                        .HasForeignKey("HallId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Hall");
-                });
-
             modelBuilder.Entity("MovieReservationSystem.Backend.Domain.RefreshToken", b =>
                 {
                     b.HasOne("MovieReservationSystem.Backend.Domain.User", "User")
@@ -425,8 +390,6 @@ namespace MovieReservationSystem.Backend.Migrations
 
             modelBuilder.Entity("MovieReservationSystem.Backend.Domain.Hall", b =>
                 {
-                    b.Navigation("Images");
-
                     b.Navigation("Seats");
 
                     b.Navigation("Showtimes");

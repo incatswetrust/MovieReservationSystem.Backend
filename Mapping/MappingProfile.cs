@@ -3,6 +3,7 @@ using MovieReservationSystem.Backend.Domain;
 using MovieReservationSystem.Backend.DTOs.Booking;
 using MovieReservationSystem.Backend.DTOs.Cinema;
 using MovieReservationSystem.Backend.DTOs.Hall;
+using MovieReservationSystem.Backend.DTOs.HallImage;
 using MovieReservationSystem.Backend.DTOs.Movie;
 using MovieReservationSystem.Backend.DTOs.Seat;
 using MovieReservationSystem.Backend.DTOs.Showtime;
@@ -35,6 +36,10 @@ public class MappingProfile : Profile
 
             CreateMap<Seat, SeatReadDto>()
                 .ForMember(dest => dest.IsReserved, opt => opt.Ignore());
+
+            // ===== HallImage =====
+            CreateMap<HallImage, HallImageReadDto>();
+            CreateMap<HallImageCreateDto, HallImage>();
 
             // ===== Showtime =====
             CreateMap<Showtime, ShowtimeReadDto>();

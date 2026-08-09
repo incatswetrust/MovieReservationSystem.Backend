@@ -9,4 +9,5 @@ public class Hall
     public Cinema? Cinema { get; set; }
     public ICollection<Showtime>? Showtimes { get; set; }
     public ICollection<Seat>? Seats { get; set; }
+    public ICollection<HallImage>? Images { get; set; }
 }

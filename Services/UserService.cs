@@ -37,7 +37,7 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
             var user = await context.Users
                 .FirstOrDefaultAsync(u => u.Username == dto.Username);
 
-            if (user == null) return null;
+            if (user == null || user.PasswordHash == null) return null;
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash)) return null;
 
             var userReadDto = mapper.Map<UserReadDto>(user);
@@ -108,6 +108,34 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
 
             existing.IsRevoked = true;
             await context.SaveChangesAsync();
+        }
+
+        public async Task<(UserReadDto User, string RefreshToken)> FindOrCreateGoogleUserAsync(string email, string googleId)
+        {
+            var user = await context.Users
+                .FirstOrDefaultAsync(u => u.GoogleId == googleId || u.Email == email);
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    Username = email,
+                    Email = email,
+                    GoogleId = googleId,
+                    Role = UserRole.User
+                };
+                context.Users.Add(user);
+            }
+            else if (user.GoogleId == null)
+            {
+                user.GoogleId = googleId;
+            }
+
+            await context.SaveChangesAsync();
+
+            var userReadDto = mapper.Map<UserReadDto>(user);
+            var refreshToken = await GenerateRefreshTokenAsync(user.Id);
+            return (userReadDto, refreshToken);
         }
 
         public string GenerateJwtToken(UserReadDto user, string secretKey)
