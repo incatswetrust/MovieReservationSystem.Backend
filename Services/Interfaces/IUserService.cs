@@ -15,4 +15,5 @@ public interface IUserService
     Task<(UserReadDto User, string RefreshToken)?> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken);
     Task RevokeRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken);
     Task<(UserReadDto User, string RefreshToken)> FindOrCreateGoogleUserAsync(string email, string googleId, CancellationToken cancellationToken);
+    Task<UserReadDto?> UpdateProfileAsync(int userId, UserUpdateDto dto, CancellationToken cancellationToken);
 }

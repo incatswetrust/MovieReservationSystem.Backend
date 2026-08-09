@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.User;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
@@ -25,6 +26,19 @@ public class AuthController(IUserService userService, IConfiguration config) : C
         if (user == null) return NotFound();
         return Ok(user);
     }
+
+    [Authorize(Roles = "User,Admin")]
+    [HttpPut("profile")]
+    public async Task<ActionResult<UserReadDto>> UpdateProfile(UserUpdateDto dto, CancellationToken cancellationToken)
+    {
+        var userIdStr = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized(new ErrorResponse("User is not authenticated"));
+
+        var updated = await userService.UpdateProfileAsync(int.Parse(userIdStr), dto, cancellationToken);
+        if (updated == null) return NotFound(new ErrorResponse("User not found"));
+        return Ok(updated);
+    }
+
     [AllowAnonymous]
     [HttpPost("register")]
     public async Task<ActionResult<UserReadDto>> Register(UserRegisterDto dto, CancellationToken cancellationToken)
@@ -50,7 +64,7 @@ public class AuthController(IUserService userService, IConfiguration config) : C
     {
         var result = await userService.LoginAsync(dto, cancellationToken);
         if (result == null)
-            return Unauthorized("Invalid username or password.");
+            return Unauthorized(new ErrorResponse("Invalid username or password."));
         var (userRead, refreshToken) = result.Value;
         var secretKey = config["JwtSettings:SecretKey"];
         var token = userService.GenerateJwtToken(userRead, secretKey);

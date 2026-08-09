@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MovieReservationSystem.Backend.DTOs.Movie;
+using MovieReservationSystem.Backend.DTOs.Seat;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
 namespace MovieReservationSystem.Backend.Controllers;
@@ -12,7 +12,7 @@ public class SeatsController(ISeatService seatService): ControllerBase
 {
     [AllowAnonymous]
     [HttpGet("{id}")]
-    public async Task<ActionResult<IEnumerable<MovieReadDto>>> GetAll(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<SeatReadDto>>> GetAll(int id, CancellationToken cancellationToken)
     {
         var seats = await seatService.GetSeatsByShowtimeAsync(id, cancellationToken);
         return Ok(seats);

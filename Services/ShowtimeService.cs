@@ -22,7 +22,12 @@ public class ShowtimeService(AppDbContext context, IMapper mapper) : IShowtimeSe
 
         public async Task<ShowtimeReadDto?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
-            var showtime = await context.Showtimes.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+            var showtime = await context.Showtimes
+                .AsNoTracking()
+                .Include(st => st.Movie)
+                .Include(st => st.Hall)
+                .ThenInclude(h => h.Cinema)
+                .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
             if (showtime == null) return null;
 
             return mapper.Map<ShowtimeReadDto>(showtime);
@@ -79,6 +84,23 @@ public class ShowtimeService(AppDbContext context, IMapper mapper) : IShowtimeSe
                 .Include(st => st.Hall)
                 .ThenInclude(h => h.Cinema)
                 .Where(s => s.HallId == hallId)
+                .ToListAsync(cancellationToken);
+
+            return mapper.Map<IEnumerable<ShowtimeReadDto>>(showtimes);
+        }
+
+        public async Task<IEnumerable<ShowtimeReadDto>> GetAvailableAsync(DateOnly date, CancellationToken cancellationToken)
+        {
+            var rangeStart = date.ToDateTime(TimeOnly.MinValue);
+            var rangeEnd = rangeStart.AddDays(1);
+
+            var showtimes = await context.Showtimes
+                .AsNoTracking()
+                .Include(st => st.Movie)
+                .Include(st => st.Hall)
+                .ThenInclude(h => h.Cinema)
+                .Where(st => st.StartTime >= rangeStart && st.StartTime < rangeEnd)
+                .OrderBy(st => st.StartTime)
                 .ToListAsync(cancellationToken);
 
             return mapper.Map<IEnumerable<ShowtimeReadDto>>(showtimes);
