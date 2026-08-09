@@ -42,6 +42,14 @@ public class ShowtimesController(IShowtimeService showtimeService) : ControllerB
         return Ok(showtimes);
     }
 
+    [AllowAnonymous]
+    [HttpGet("available")]
+    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetAvailable([FromQuery] DateOnly date, CancellationToken cancellationToken)
+    {
+        var showtimes = await showtimeService.GetAvailableAsync(date, cancellationToken);
+        return Ok(showtimes);
+    }
+
     [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<ShowtimeReadDto>> Create(ShowtimeCreateDto dto, CancellationToken cancellationToken)

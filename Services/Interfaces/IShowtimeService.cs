@@ -11,4 +11,5 @@ public interface IShowtimeService
     Task<bool> DeleteAsync(int id, CancellationToken cancellationToken);
     Task<IEnumerable<ShowtimeReadDto>> GetByMovieIdAsync(int movieId, CancellationToken cancellationToken);
     Task<IEnumerable<ShowtimeReadDto>> GetByHallIdAsync(int hallId, CancellationToken cancellationToken);
+    Task<IEnumerable<ShowtimeReadDto>> GetAvailableAsync(DateOnly date, CancellationToken cancellationToken);
 }
