@@ -1,11 +1,12 @@
-using MovieReservationSystem.Backend.Domain;
+using System.ComponentModel.DataAnnotations;
 
 namespace MovieReservationSystem.Backend.DTOs.User;
 
-public class UserReadDto
+public class UserUpdateDto
 {
-    public int Id { get; set; }
+    [Required, MinLength(3)]
     public string Username { get; set; } = null!;
+
+    [EmailAddress]
     public string? Email { get; set; }
-    public UserRole Role { get; set; }
 }

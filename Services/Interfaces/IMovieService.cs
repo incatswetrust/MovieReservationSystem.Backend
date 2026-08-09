@@ -1,13 +1,17 @@
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.Movie;
 
 namespace MovieReservationSystem.Backend.Services.Interfaces;
 
 public interface IMovieService
 {
-    Task<IEnumerable<MovieReadDto>> GetAllAsync();
-    Task<MovieReadDto?> GetByIdAsync(int id);
-    Task<MovieReadDto> CreateAsync(MovieCreateDto dto);
-    Task<MovieReadDto?> UpdateAsync(int id, MovieUpdateDto dto);
-    Task<bool> DeleteAsync(int id);
-    Task<IEnumerable<MovieReadDto>> GetByGenreAsync(string genre);
+    Task<IEnumerable<MovieReadDto>> GetAllAsync(CancellationToken cancellationToken);
+    Task<PagedResult<MovieReadDto>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken);
+    Task<MovieReadDto?> GetByIdAsync(int id, CancellationToken cancellationToken);
+    Task<MovieReadDto> CreateAsync(MovieCreateDto dto, CancellationToken cancellationToken);
+    Task<MovieReadDto?> UpdateAsync(int id, MovieUpdateDto dto, CancellationToken cancellationToken);
+    Task<bool> DeleteAsync(int id, CancellationToken cancellationToken);
+    Task<IEnumerable<MovieReadDto>> GetByGenreAsync(string genre, CancellationToken cancellationToken);
+    Task<IEnumerable<MovieReadDto>> SearchAsync(string q, CancellationToken cancellationToken);
+    Task<IEnumerable<MovieReadDto>> FilterAsync(string? genre, int? year, string? rating, CancellationToken cancellationToken);
 }

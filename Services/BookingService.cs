@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using MovieReservationSystem.Backend.Data;
 using MovieReservationSystem.Backend.Domain;
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.Booking;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
@@ -9,20 +10,55 @@ namespace MovieReservationSystem.Backend.Services;
 
 public class BookingService(AppDbContext context, IMapper mapper) : IBookingService
 {
-    public async Task<IEnumerable<BookingReadDto>> GetAllAsync()
+    public async Task<IEnumerable<BookingReadDto>> GetAllAsync(CancellationToken cancellationToken)
         {
             var bookings = await context.Bookings
-                .ToListAsync();
+                .AsNoTracking()
+                .Include(b => b.BookedSeats)
+                .ToListAsync(cancellationToken);
 
-            var result = mapper.Map<IEnumerable<BookingReadDto>>(bookings);
-            return result;
+            return MapWithSeatIds(bookings);
         }
 
-        public async Task<BookingReadDto?> GetByIdAsync(int id)
+        public async Task<PagedResult<BookingReadDto>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken)
+        {
+            page = page < 1 ? 1 : page;
+            pageSize = pageSize < 1 ? 20 : pageSize;
+
+            var query = context.Bookings.AsNoTracking().OrderBy(b => b.Id);
+            var total = await query.CountAsync(cancellationToken);
+            var bookings = await query
+                .Include(b => b.BookedSeats)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return new PagedResult<BookingReadDto>
+            {
+                Items = MapWithSeatIds(bookings).ToList(),
+                Total = total,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+
+        private IEnumerable<BookingReadDto> MapWithSeatIds(IEnumerable<Booking> bookings)
+        {
+            foreach (var booking in bookings)
+            {
+                var dto = mapper.Map<BookingReadDto>(booking);
+                if (booking.BookedSeats != null)
+                    dto.SeatIds = booking.BookedSeats.Select(bs => bs.SeatId).ToList();
+                yield return dto;
+            }
+        }
+
+        public async Task<BookingReadDto?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             var booking = await context.Bookings
+                .AsNoTracking()
                 .Include(b => b.BookedSeats)
-                .FirstOrDefaultAsync(b => b.Id == id);
+                .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
             if (booking == null) return null;
             var bookingDto = mapper.Map<BookingReadDto>(booking);
@@ -36,9 +72,9 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
             return bookingDto;
         }
 
-        public async Task<BookingReadDto> CreateAsync(BookingCreateDto dto)
+        public async Task<BookingReadDto> CreateAsync(BookingCreateDto dto, CancellationToken cancellationToken)
         {
-            await using var transaction = await context.Database.BeginTransactionAsync();
+            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
             try
             {
@@ -50,7 +86,7 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
                           && booking.ShowtimeId == dto.ShowtimeId
                           && booking.Status != "Canceled"
                     select seat.SeatId
-                ).ToListAsync();
+                ).ToListAsync(cancellationToken);
 
                 if (alreadyBookedSeats.Any())
                 {
@@ -67,7 +103,7 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
                 };
 
                 context.Bookings.Add(boking);
-                await context.SaveChangesAsync();
+                await context.SaveChangesAsync(cancellationToken);
                 var bookedSeatsToAdd = new List<BookedSeat>();
                 foreach (var seatId in dto.SeatIds)
                 {
@@ -75,20 +111,20 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
                     {
                         BookingId = boking.Id,
                         SeatId = seatId,
-                        Price = 0 
+                        Price = 0
                     });
                 }
 
                 context.BookedSeats.AddRange(bookedSeatsToAdd);
-                await context.SaveChangesAsync();
-                var showtime = await context.Showtimes.FindAsync(dto.ShowtimeId);
+                await context.SaveChangesAsync(cancellationToken);
+                var showtime = await context.Showtimes.FindAsync(new object?[] { dto.ShowtimeId }, cancellationToken);
                 if (showtime != null)
                 {
                     boking.TotalPrice = showtime.Price * dto.SeatIds.Count;
-                    await context.SaveChangesAsync();
+                    await context.SaveChangesAsync(cancellationToken);
                 }
-                await transaction.CommitAsync();
-                await context.Entry(boking).Collection(b => b.BookedSeats!).LoadAsync();
+                await transaction.CommitAsync(cancellationToken);
+                await context.Entry(boking).Collection(b => b.BookedSeats!).LoadAsync(cancellationToken);
 
                 var readDto = mapper.Map<BookingReadDto>(boking);
                 if (boking.BookedSeats != null) readDto.SeatIds = boking.BookedSeats.Select(bs => bs.SeatId).ToList();
@@ -97,20 +133,20 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
             }
             catch
             {
-                await transaction.RollbackAsync();
+                await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
         }
 
-        public async Task<BookingReadDto?> UpdateAsync(int id, BookingUpdateDto dto)
+        public async Task<BookingReadDto?> UpdateAsync(int id, BookingUpdateDto dto, CancellationToken cancellationToken)
         {
             var booking = await context.Bookings
                 .Include(b => b.BookedSeats)
-                .FirstOrDefaultAsync(b => b.Id == id);
+                .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
             if (booking == null) return null;
             booking.Status = dto.Status;
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(cancellationToken);
 
             var readDto = mapper.Map<BookingReadDto>(booking);
             if (booking.BookedSeats != null)
@@ -119,13 +155,13 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
             }
             return readDto;
         }
-        public async Task<bool> CancelAsync(int id)
+        public async Task<bool> CancelAsync(int id, CancellationToken cancellationToken)
         {
-            var booking = await context.Bookings.FindAsync(id);
+            var booking = await context.Bookings.FindAsync(new object?[] { id }, cancellationToken);
             if (booking == null) return false;
             booking.Status = "Canceled";
-            await context.SaveChangesAsync();
-            
+            await context.SaveChangesAsync(cancellationToken);
+
             // _context.Bookings.Remove(booking);
             // await _context.SaveChangesAsync();
 
