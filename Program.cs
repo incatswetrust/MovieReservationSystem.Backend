@@ -80,11 +80,18 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+var prodOrigin = builder.Configuration["Cors:ProdOrigin"];
+var allowedOrigins = new List<string> { "http://localhost:5173" };
+if (!string.IsNullOrWhiteSpace(prodOrigin))
+{
+    allowedOrigins.Add(prodOrigin);
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(CorsPolicy, policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(allowedOrigins.ToArray())
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
