@@ -11,13 +11,13 @@ public class MovieService(AppDbContext context, IMapper mapper) : IMovieService
 {
     public async Task<IEnumerable<MovieReadDto>> GetAllAsync()
         {
-            var movies = await context.Movies.ToListAsync();
+            var movies = await context.Movies.AsNoTracking().ToListAsync();
             return mapper.Map<IEnumerable<MovieReadDto>>(movies);
         }
 
         public async Task<MovieReadDto?> GetByIdAsync(int id)
         {
-            var movie = await context.Movies.FindAsync(id);
+            var movie = await context.Movies.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
             if (movie == null) return null;
 
             return mapper.Map<MovieReadDto>(movie);
@@ -55,6 +55,7 @@ public class MovieService(AppDbContext context, IMapper mapper) : IMovieService
         public async Task<IEnumerable<MovieReadDto>> GetByGenreAsync(string genre)
         {
             var movies = await context.Movies
+                .AsNoTracking()
                 .Where(m => m.Genre != null && m.Genre == genre)
                 .ToListAsync();
 

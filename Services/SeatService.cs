@@ -11,6 +11,7 @@ public class SeatService(AppDbContext context, IMapper mapper) : ISeatService
     public async Task<IEnumerable<SeatReadDto>> GetSeatsByShowtimeAsync(int showtimeId)
     {
         var showtime = await context.Showtimes
+            .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == showtimeId);
 
         if (showtime == null)
@@ -18,6 +19,7 @@ public class SeatService(AppDbContext context, IMapper mapper) : ISeatService
             return Enumerable.Empty<SeatReadDto>();
         }
         var seats = await context.Seats
+            .AsNoTracking()
             .Where(s => s.HallId == showtime.HallId)
             .ToListAsync();
 

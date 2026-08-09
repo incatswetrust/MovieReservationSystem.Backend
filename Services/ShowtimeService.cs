@@ -12,6 +12,7 @@ public class ShowtimeService(AppDbContext context, IMapper mapper) : IShowtimeSe
     public async Task<IEnumerable<ShowtimeReadDto>> GetAllAsync()
         {
             var showtimes = await context.Showtimes
+                .AsNoTracking()
                 .Include(st => st.Movie)
                 .Include(st => st.Hall)
                 .ThenInclude(h => h.Cinema)
@@ -21,7 +22,7 @@ public class ShowtimeService(AppDbContext context, IMapper mapper) : IShowtimeSe
 
         public async Task<ShowtimeReadDto?> GetByIdAsync(int id)
         {
-            var showtime = await context.Showtimes.FindAsync(id);
+            var showtime = await context.Showtimes.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id);
             if (showtime == null) return null;
 
             return mapper.Map<ShowtimeReadDto>(showtime);
@@ -58,19 +59,23 @@ public class ShowtimeService(AppDbContext context, IMapper mapper) : IShowtimeSe
         }
         public async Task<IEnumerable<ShowtimeReadDto>> GetByMovieIdAsync(int movieId)
         {
-            var showtimes = await context.Showtimes.Include(st => st.Movie)
+            var showtimes = await context.Showtimes
+                .AsNoTracking()
+                .Include(st => st.Movie)
                 .Include(st => st.Hall)
                 .ThenInclude(h => h.Cinema)
                 .Where(s => s.MovieId == movieId)
                 .ToListAsync();
-            
+
 
             return mapper.Map<IEnumerable<ShowtimeReadDto>>(showtimes);
         }
 
         public async Task<IEnumerable<ShowtimeReadDto>> GetByHallIdAsync(int hallId)
         {
-            var showtimes = await context.Showtimes.Include(st => st.Movie)
+            var showtimes = await context.Showtimes
+                .AsNoTracking()
+                .Include(st => st.Movie)
                 .Include(st => st.Hall)
                 .ThenInclude(h => h.Cinema)
                 .Where(s => s.HallId == hallId)

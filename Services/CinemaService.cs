@@ -11,13 +11,13 @@ public class CinemaService(AppDbContext context, IMapper mapper) : ICinemaServic
 {
     public async Task<IEnumerable<CinemaReadDto>> GetAllAsync()
     {
-        var cinemas = await context.Cinemas.ToListAsync();
+        var cinemas = await context.Cinemas.AsNoTracking().ToListAsync();
         return mapper.Map<IEnumerable<CinemaReadDto>>(cinemas);
     }
 
     public async Task<CinemaReadDto?> GetByIdAsync(int id)
     {
-        var cinema = await context.Cinemas.FindAsync(id);
+        var cinema = await context.Cinemas.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
         if (cinema == null) return null;
 
         return mapper.Map<CinemaReadDto>(cinema);

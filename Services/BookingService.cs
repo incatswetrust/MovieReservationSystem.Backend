@@ -12,6 +12,7 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
     public async Task<IEnumerable<BookingReadDto>> GetAllAsync()
         {
             var bookings = await context.Bookings
+                .AsNoTracking()
                 .ToListAsync();
 
             var result = mapper.Map<IEnumerable<BookingReadDto>>(bookings);
@@ -21,6 +22,7 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
         public async Task<BookingReadDto?> GetByIdAsync(int id)
         {
             var booking = await context.Bookings
+                .AsNoTracking()
                 .Include(b => b.BookedSeats)
                 .FirstOrDefaultAsync(b => b.Id == id);
 

@@ -12,6 +12,7 @@ public class HallImageService(AppDbContext context, IMapper mapper) : IHallImage
     public async Task<IEnumerable<HallImageReadDto>> GetByHallIdAsync(int hallId)
     {
         var images = await context.HallImages
+            .AsNoTracking()
             .Where(i => i.HallId == hallId)
             .OrderBy(i => i.Order)
             .ToListAsync();

@@ -35,6 +35,7 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
         public async Task<(UserReadDto User, string RefreshToken)?> LoginAsync(UserLoginDto dto)
         {
             var user = await context.Users
+                .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Username == dto.Username);
 
             if (user == null || user.PasswordHash == null) return null;
@@ -46,13 +47,13 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
         }
         public async Task<IEnumerable<UserReadDto>> GetAllAsync()
         {
-            var users = await context.Users.ToListAsync();
+            var users = await context.Users.AsNoTracking().ToListAsync();
             return mapper.Map<IEnumerable<UserReadDto>>(users);
         }
 
         public async Task<UserReadDto?> GetByIdAsync(int id)
         {
-            var user = await context.Users.FindAsync(id);
+            var user = await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
             return user == null ? null : mapper.Map<UserReadDto>(user);
         }
 

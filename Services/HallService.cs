@@ -14,13 +14,14 @@ public class HallService(AppDbContext context, IMapper mapper) : IHallService
     public async Task<IEnumerable<HallReadDto>> GetAllAsync()
     {
         var halls = await context.Halls
+            .AsNoTracking()
             .ToListAsync();
         return mapper.Map<IEnumerable<HallReadDto>>(halls);
     }
 
     public async Task<HallReadDto?> GetByIdAsync(int id)
     {
-        var hall = await context.Halls.Include(h => h.Seats).Include(h => h.Images)
+        var hall = await context.Halls.AsNoTracking().Include(h => h.Seats).Include(h => h.Images)
             .FirstOrDefaultAsync(h => h.Id == id);
         return hall == null ? null : mapper.Map<HallReadDto>(hall);
     }
@@ -83,10 +84,13 @@ public class HallService(AppDbContext context, IMapper mapper) : IHallService
 
     public async Task<IEnumerable<HallReadDto>> GetByCinemaId(int cinemaId)
     {
-        var halls = context.Halls.Where(hall => hall.CinemaId == cinemaId).Include(h => h.Seats).Include(h => h.Images);
-        
-        var s = mapper.Map<IEnumerable<HallReadDto>>(halls);
+        var halls = await context.Halls
+            .AsNoTracking()
+            .Where(hall => hall.CinemaId == cinemaId)
+            .Include(h => h.Seats)
+            .Include(h => h.Images)
+            .ToListAsync();
 
-        return s;
+        return mapper.Map<IEnumerable<HallReadDto>>(halls);
     }
 }
