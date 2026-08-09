@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using MovieReservationSystem.Backend.Data;
 using MovieReservationSystem.Backend.Domain;
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.Movie;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
@@ -13,6 +14,27 @@ public class MovieService(AppDbContext context, IMapper mapper) : IMovieService
         {
             var movies = await context.Movies.AsNoTracking().ToListAsync(cancellationToken);
             return mapper.Map<IEnumerable<MovieReadDto>>(movies);
+        }
+
+        public async Task<PagedResult<MovieReadDto>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken)
+        {
+            page = page < 1 ? 1 : page;
+            pageSize = pageSize < 1 ? 20 : pageSize;
+
+            var query = context.Movies.AsNoTracking().OrderBy(m => m.Id);
+            var total = await query.CountAsync(cancellationToken);
+            var movies = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return new PagedResult<MovieReadDto>
+            {
+                Items = mapper.Map<List<MovieReadDto>>(movies),
+                Total = total,
+                Page = page,
+                PageSize = pageSize
+            };
         }
 
         public async Task<MovieReadDto?> GetByIdAsync(int id, CancellationToken cancellationToken)

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.Booking;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
@@ -12,9 +13,9 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
 {
     [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<BookingReadDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<BookingReadDto>>> GetAll(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default)
     {
-        var allBookings = await bookingService.GetAllAsync(cancellationToken);
+        var allBookings = await bookingService.GetAllAsync(page, pageSize, cancellationToken);
         return Ok(allBookings);
     }
 

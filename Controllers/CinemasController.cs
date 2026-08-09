@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.Cinema;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
@@ -11,9 +12,9 @@ public class CinemasController(ICinemaService cinemaService) : ControllerBase
 {
     [HttpGet]
     [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<CinemaReadDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<CinemaReadDto>>> GetAll(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default)
     {
-        var cinemas = await cinemaService.GetAllAsync(cancellationToken);
+        var cinemas = await cinemaService.GetAllAsync(page, pageSize, cancellationToken);
         return Ok(cinemas);
     }
 
