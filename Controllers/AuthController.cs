@@ -26,6 +26,19 @@ public class AuthController(IUserService userService, IConfiguration config) : C
         if (user == null) return NotFound();
         return Ok(user);
     }
+
+    [Authorize(Roles = "User,Admin")]
+    [HttpPut("profile")]
+    public async Task<ActionResult<UserReadDto>> UpdateProfile(UserUpdateDto dto, CancellationToken cancellationToken)
+    {
+        var userIdStr = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized(new ErrorResponse("User is not authenticated"));
+
+        var updated = await userService.UpdateProfileAsync(int.Parse(userIdStr), dto, cancellationToken);
+        if (updated == null) return NotFound(new ErrorResponse("User not found"));
+        return Ok(updated);
+    }
+
     [AllowAnonymous]
     [HttpPost("register")]
     public async Task<ActionResult<UserReadDto>> Register(UserRegisterDto dto, CancellationToken cancellationToken)

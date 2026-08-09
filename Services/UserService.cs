@@ -66,6 +66,25 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
             await context.SaveChangesAsync(cancellationToken);
             return true;
         }
+        public async Task<UserReadDto?> UpdateProfileAsync(int userId, UserUpdateDto dto, CancellationToken cancellationToken)
+        {
+            var user = await context.Users.FindAsync(new object?[] { userId }, cancellationToken);
+            if (user == null) return null;
+
+            var usernameTaken = await context.Users
+                .AnyAsync(u => u.Id != userId && u.Username == dto.Username, cancellationToken);
+            if (usernameTaken)
+            {
+                throw new Exception("Username already taken.");
+            }
+
+            user.Username = dto.Username;
+            user.Email = dto.Email;
+            await context.SaveChangesAsync(cancellationToken);
+
+            return mapper.Map<UserReadDto>(user);
+        }
+
         private string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
