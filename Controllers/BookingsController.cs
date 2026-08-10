@@ -11,7 +11,7 @@ namespace MovieReservationSystem.Backend.Controllers;
 [Route("api/[controller]")]
 public class BookingsController(IBookingService bookingService) : ControllerBase
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Viewer")]
     [HttpGet]
     public async Task<ActionResult<PagedResult<BookingReadDto>>> GetAll(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default)
     {

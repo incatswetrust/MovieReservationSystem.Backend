@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using MovieReservationSystem.Backend.Domain;
 
 namespace MovieReservationSystem.Backend.DTOs.User;
 
-public class UserRegisterDto
+public class UserCreateDto
 {
     [Required, MinLength(3)]
     public string Username { get; set; } = null!;
@@ -12,4 +13,6 @@ public class UserRegisterDto
 
     [EmailAddress]
     public string? Email { get; set; }
+
+    public UserRole Role { get; set; }
 }

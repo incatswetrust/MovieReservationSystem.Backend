@@ -3,7 +3,8 @@ namespace MovieReservationSystem.Backend.Domain;
 public enum UserRole
 {
     User,
-    Admin
+    Admin,
+    Viewer
 }
 
 public class User

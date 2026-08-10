@@ -8,7 +8,7 @@ namespace MovieReservationSystem.Backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")] // Только админ
+[Authorize(Roles = "Admin,Viewer")] // Admin: full access. Viewer: read-only (mutating actions below re-restrict to Admin).
 public class UsersController(IUserService userService) : ControllerBase
 {
     [HttpGet]
@@ -26,6 +26,15 @@ public class UsersController(IUserService userService) : ControllerBase
         return Ok(user);
     }
 
+    [Authorize(Roles = "Admin")]
+    [HttpPost]
+    public async Task<ActionResult<UserReadDto>> Create(UserCreateDto dto, CancellationToken cancellationToken)
+    {
+        var created = await userService.CreateAsync(dto, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+    }
+
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<ActionResult<UserReadDto>> Delete(int id, CancellationToken cancellationToken)
     {
