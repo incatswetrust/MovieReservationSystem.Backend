@@ -13,7 +13,11 @@ namespace MovieReservationSystem.Backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(IUserService userService, IConfiguration config, IWebHostEnvironment env) : ControllerBase
+public class AuthController(
+    IUserService userService,
+    IConfiguration config,
+    IWebHostEnvironment env,
+    IGoogleAuthExchangeStore googleAuthExchangeStore) : ControllerBase
 {
 
     [Authorize(Roles = "User,Admin")]
@@ -144,14 +148,37 @@ public class AuthController(IUserService userService, IConfiguration config, IWe
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(googleId))
             return Unauthorized();
 
-        var (userRead, refreshToken) = await userService.FindOrCreateGoogleUserAsync(email, googleId, cancellationToken);
-        var secretKey = config["JwtSettings:SecretKey"];
-        var token = userService.GenerateJwtToken(userRead, secretKey);
-        var cookieOptions = AccessTokenCookieOptions();
-        Response.Cookies.Append("X-Access-Token", token, cookieOptions);
-        Response.Cookies.Append("X-Refresh-Token", refreshToken, RefreshTokenCookieOptions());
+        var (userRead, _) = await userService.FindOrCreateGoogleUserAsync(email, googleId, cancellationToken);
+
+        // This callback lands directly on the backend's own domain (required for the OAuth
+        // correlation cookie to match), but the rest of the app's session cookies are set via
+        // the frontend's own proxied /api calls. Setting the session cookie here would scope it
+        // to the wrong domain, so hand off a short-lived one-time code instead: the frontend
+        // exchanges it through its own origin, where the cookie actually needs to live.
+        var exchangeCode = googleAuthExchangeStore.Issue(userRead.Id);
 
         var frontendUrl = config["Cors:ProdOrigin"];
-        return Redirect(string.IsNullOrWhiteSpace(frontendUrl) ? "http://localhost:5173" : frontendUrl);
+        var baseUrl = string.IsNullOrWhiteSpace(frontendUrl) ? "http://localhost:5173" : frontendUrl;
+        return Redirect($"{baseUrl}/auth/google-complete?code={Uri.EscapeDataString(exchangeCode)}");
+    }
+
+    [AllowAnonymous]
+    [HttpPost("google/exchange")]
+    public async Task<ActionResult<UserReadDto>> GoogleExchange(GoogleExchangeDto dto, CancellationToken cancellationToken)
+    {
+        if (!googleAuthExchangeStore.TryConsume(dto.Code, out var userId))
+            return Unauthorized(new ErrorResponse("Google sign-in code is invalid or expired."));
+
+        var userRead = await userService.GetByIdAsync(userId, cancellationToken);
+        if (userRead == null) return NotFound(new ErrorResponse("User not found"));
+
+        var secretKey = config["JwtSettings:SecretKey"];
+        var token = userService.GenerateJwtToken(userRead, secretKey);
+        var refreshToken = await userService.GenerateRefreshTokenAsync(userRead.Id, cancellationToken);
+
+        Response.Cookies.Append("X-Access-Token", token, AccessTokenCookieOptions());
+        Response.Cookies.Append("X-Refresh-Token", refreshToken, RefreshTokenCookieOptions());
+
+        return Ok(userRead);
     }
 }
