@@ -1,14 +1,20 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Primitives;
 using MovieReservationSystem.Backend.Data;
 using MovieReservationSystem.Backend.Domain;
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.Showtime;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
 namespace MovieReservationSystem.Backend.Services;
 
-public class ShowtimeService(AppDbContext context, IMapper mapper) : IShowtimeService
+public class ShowtimeService(AppDbContext context, IMapper mapper, IMemoryCache cache) : IShowtimeService
 {
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(45);
+    private static CancellationTokenSource _listCacheResetSource = new();
+
     public async Task<IEnumerable<ShowtimeReadDto>> GetAllAsync(CancellationToken cancellationToken)
         {
             var showtimes = await context.Showtimes
@@ -20,8 +26,50 @@ public class ShowtimeService(AppDbContext context, IMapper mapper) : IShowtimeSe
             return mapper.Map<IEnumerable<ShowtimeReadDto>>(showtimes);
         }
 
+        public async Task<PagedResult<ShowtimeReadDto>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken)
+        {
+            page = page < 1 ? 1 : page;
+            pageSize = pageSize < 1 ? 20 : pageSize;
+
+            var cacheKey = $"showtimes:page:{page}:{pageSize}";
+            var cached = await cache.GetOrCreateAsync(cacheKey, async entry =>
+            {
+                entry.SetAbsoluteExpiration(CacheDuration);
+                entry.AddExpirationToken(new CancellationChangeToken(_listCacheResetSource.Token));
+
+                var query = context.Showtimes
+                    .AsNoTracking()
+                    .Include(st => st.Movie)
+                    .Include(st => st.Hall)
+                    .ThenInclude(h => h.Cinema)
+                    .OrderBy(st => st.Id);
+
+                var total = await query.CountAsync(cancellationToken);
+                var showtimes = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync(cancellationToken);
+
+                return new PagedResult<ShowtimeReadDto>
+                {
+                    Items = mapper.Map<List<ShowtimeReadDto>>(showtimes),
+                    Total = total,
+                    Page = page,
+                    PageSize = pageSize
+                };
+            });
+
+            return cached!;
+        }
+
         public async Task<ShowtimeReadDto?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
+            var cacheKey = $"showtimes:{id}";
+            if (cache.TryGetValue(cacheKey, out ShowtimeReadDto? cached))
+            {
+                return cached;
+            }
+
             var showtime = await context.Showtimes
                 .AsNoTracking()
                 .Include(st => st.Movie)
@@ -30,7 +78,9 @@ public class ShowtimeService(AppDbContext context, IMapper mapper) : IShowtimeSe
                 .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
             if (showtime == null) return null;
 
-            return mapper.Map<ShowtimeReadDto>(showtime);
+            var dto = mapper.Map<ShowtimeReadDto>(showtime);
+            cache.Set(cacheKey, dto, CacheDuration);
+            return dto;
         }
 
         public async Task<ShowtimeReadDto> CreateAsync(ShowtimeCreateDto dto, CancellationToken cancellationToken)
@@ -38,6 +88,8 @@ public class ShowtimeService(AppDbContext context, IMapper mapper) : IShowtimeSe
             var showtime = mapper.Map<Showtime>(dto);
             context.Showtimes.Add(showtime);
             await context.SaveChangesAsync(cancellationToken);
+
+            InvalidateListCache();
 
             return mapper.Map<ShowtimeReadDto>(showtime);
         }
@@ -50,6 +102,9 @@ public class ShowtimeService(AppDbContext context, IMapper mapper) : IShowtimeSe
             mapper.Map(dto, showtime);
             await context.SaveChangesAsync(cancellationToken);
 
+            InvalidateListCache();
+            cache.Remove($"showtimes:{id}");
+
             return mapper.Map<ShowtimeReadDto>(showtime);
         }
 
@@ -60,7 +115,23 @@ public class ShowtimeService(AppDbContext context, IMapper mapper) : IShowtimeSe
 
             context.Showtimes.Remove(showtime);
             await context.SaveChangesAsync(cancellationToken);
+
+            InvalidateListCache();
+            cache.Remove($"showtimes:{id}");
+
             return true;
+        }
+
+        // Cancels the shared expiration token so all cached "showtimes:page:*" entries
+        // are invalidated together, since individual page keys aren't tracked.
+        private static void InvalidateListCache()
+        {
+            var previous = Interlocked.Exchange(ref _listCacheResetSource, new CancellationTokenSource());
+            if (!previous.IsCancellationRequested)
+            {
+                previous.Cancel();
+            }
+            previous.Dispose();
         }
         public async Task<IEnumerable<ShowtimeReadDto>> GetByMovieIdAsync(int movieId, CancellationToken cancellationToken)
         {
