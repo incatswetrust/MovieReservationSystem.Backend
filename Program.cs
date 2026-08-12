@@ -226,6 +226,9 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -253,6 +256,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseRateLimiter();
+
+app.MapHealthChecks("/health");
 
 app.MapControllers();
 
