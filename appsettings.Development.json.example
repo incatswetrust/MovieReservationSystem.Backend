@@ -11,6 +11,9 @@
       "ClientSecret": ""
     }
   },
+  "Sentry": {
+    "Dsn": ""
+  },
   "Logging": {
     "LogLevel": {
       "Default": "Information",

@@ -21,6 +21,20 @@ var builder = WebApplication.CreateBuilder(args);
 const string CorsPolicy = "DevCors";
 const string ExternalAuthScheme = "External";
 
+// Error tracking is opt-in: only initializes when Sentry:Dsn is actually configured, so
+// this stays a no-op until someone sets up a Sentry project and provides the DSN (env var
+// Sentry__Dsn in prod, or appsettings.Development.json locally).
+var sentryDsn = builder.Configuration["Sentry:Dsn"];
+if (!string.IsNullOrWhiteSpace(sentryDsn))
+{
+    builder.WebHost.UseSentry(options =>
+    {
+        options.Dsn = sentryDsn;
+        options.Environment = builder.Environment.EnvironmentName;
+        options.TracesSampleRate = 0.2;
+    });
+}
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
