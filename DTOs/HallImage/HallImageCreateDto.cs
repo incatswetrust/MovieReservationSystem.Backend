@@ -1,11 +1,9 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace MovieReservationSystem.Backend.DTOs.HallImage;
 
 public class HallImageCreateDto
 {
-    [Required]
-    public string ImageUrl { get; set; } = null!;
+    public string? Url { get; set; }
+    public string? Base64Image { get; set; }
 
     public int Order { get; set; }
 
