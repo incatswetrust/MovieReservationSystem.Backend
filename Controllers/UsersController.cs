@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MovieReservationSystem.Backend.DTOs;
@@ -38,6 +39,12 @@ public class UsersController(IUserService userService) : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult<UserReadDto>> Delete(int id, CancellationToken cancellationToken)
     {
+        var currentUserIdStr = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(currentUserIdStr, out var currentUserId) && currentUserId == id)
+        {
+            return BadRequest(new ErrorResponse("You cannot delete your own account."));
+        }
+
         var success = await userService.DeleteAsync(id, cancellationToken);
         if (!success) return NotFound(new ErrorResponse("User not found"));
         return NoContent();
