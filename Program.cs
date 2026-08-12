@@ -213,6 +213,8 @@ builder.Services.AddRateLimiter(options =>
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
+builder.Services.AddMemoryCache();
+
 builder.Services.AddSingleton<IGoogleAuthExchangeStore, GoogleAuthExchangeStore>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IMovieService, MovieService>();
@@ -222,6 +224,7 @@ builder.Services.AddScoped<IHallImageService, HallImageService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
 var app = builder.Build();
 
