@@ -243,6 +243,8 @@ builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>();
 
+builder.Services.AddHostedService<RefreshTokenCleanupService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
