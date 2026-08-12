@@ -4,7 +4,7 @@ namespace MovieReservationSystem.Backend.DTOs.Hall;
 
 public class HallCreateDto
 {
-    [Required]
+    [Required, MaxLength(200)]
     public string Name { get; set; } = null!;
 
     [Required, Range(1, int.MaxValue)]
