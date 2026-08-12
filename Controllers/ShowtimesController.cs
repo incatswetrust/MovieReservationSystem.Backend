@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.Showtime;
 using MovieReservationSystem.Backend.Services.Interfaces;
 
@@ -11,9 +12,9 @@ public class ShowtimesController(IShowtimeService showtimeService) : ControllerB
 {
     [AllowAnonymous]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ShowtimeReadDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<ShowtimeReadDto>>> GetAll(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default)
     {
-        var showtimes = await showtimeService.GetAllAsync(cancellationToken);
+        var showtimes = await showtimeService.GetAllAsync(page, pageSize, cancellationToken);
         return Ok(showtimes);
     }
 

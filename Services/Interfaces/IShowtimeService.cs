@@ -1,3 +1,4 @@
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.Showtime;
 
 namespace MovieReservationSystem.Backend.Services.Interfaces;
@@ -5,6 +6,7 @@ namespace MovieReservationSystem.Backend.Services.Interfaces;
 public interface IShowtimeService
 {
     Task<IEnumerable<ShowtimeReadDto>> GetAllAsync(CancellationToken cancellationToken);
+    Task<PagedResult<ShowtimeReadDto>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken);
     Task<ShowtimeReadDto?> GetByIdAsync(int id, CancellationToken cancellationToken);
     Task<ShowtimeReadDto> CreateAsync(ShowtimeCreateDto dto, CancellationToken cancellationToken);
     Task<ShowtimeReadDto?> UpdateAsync(int id, ShowtimeUpdateDto dto, CancellationToken cancellationToken);

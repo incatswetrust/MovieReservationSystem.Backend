@@ -11,4 +11,5 @@ public interface ICinemaService
     Task<CinemaReadDto> CreateAsync(CinemaCreateDto dto, CancellationToken cancellationToken);
     Task<CinemaReadDto?> UpdateAsync(int id, CinemaUpdateDto dto, CancellationToken cancellationToken);
     Task<bool> DeleteAsync(int id, CancellationToken cancellationToken);
+    Task<IEnumerable<CinemaReadDto>> SearchAsync(string q, CancellationToken cancellationToken);
 }

@@ -21,6 +21,11 @@ public class HallImageService(AppDbContext context, IMapper mapper) : IHallImage
 
     public async Task<HallImageReadDto> CreateAsync(int hallId, HallImageCreateDto dto, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(dto.Url) && string.IsNullOrWhiteSpace(dto.Base64Image))
+        {
+            throw new Exception("Either an image URL or an uploaded image is required.");
+        }
+
         var image = mapper.Map<HallImage>(dto);
         image.HallId = hallId;
         context.HallImages.Add(image);

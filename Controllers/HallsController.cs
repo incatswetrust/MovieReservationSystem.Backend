@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.Hall;
 using MovieReservationSystem.Backend.DTOs.HallImage;
 using MovieReservationSystem.Backend.Services.Interfaces;
@@ -13,9 +14,18 @@ public class HallsController(IHallService hallService, IHallImageService hallIma
 {
     [HttpGet]
     [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<HallReadDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<HallReadDto>>> GetAll(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default)
     {
-        var halls = await hallService.GetAllAsync(cancellationToken);
+        var halls = await hallService.GetAllAsync(page, pageSize, cancellationToken);
+        return Ok(halls);
+    }
+
+    [HttpGet("search")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<HallReadDto>>> Search([FromQuery] string q, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(q)) return Ok(Enumerable.Empty<HallReadDto>());
+        var halls = await hallService.SearchAsync(q, cancellationToken);
         return Ok(halls);
     }
 
@@ -76,6 +86,7 @@ public class HallsController(IHallService hallService, IHallImageService hallIma
     public async Task<ActionResult<HallImageReadDto>> AddImage(int id, HallImageCreateDto dto, CancellationToken cancellationToken)
     {
         var created = await hallImageService.CreateAsync(id, dto, cancellationToken);
+        hallService.InvalidateHallCache(id);
         return CreatedAtAction(nameof(GetImages), new { id }, created);
     }
 
@@ -85,6 +96,7 @@ public class HallsController(IHallService hallService, IHallImageService hallIma
     {
         var success = await hallImageService.DeleteAsync(id, imageId, cancellationToken);
         if (!success) return NotFound();
+        hallService.InvalidateHallCache(id);
         return NoContent();
     }
 }
