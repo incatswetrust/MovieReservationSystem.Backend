@@ -136,6 +136,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 
 const string AnonymousRateLimitPolicy = "AnonymousRateLimit";
 const string AuthenticatedRateLimitPolicy = "AuthenticatedRateLimit";
+const string LoginRateLimitPolicy = "LoginRateLimit";
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -190,6 +191,20 @@ builder.Services.AddRateLimiter(options =>
         return RateLimitPartition.GetFixedWindowLimiter($"user:{userId}", _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = 120,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+
+    // Stricter, IP-keyed limit on top of the global anonymous limiter, applied only to
+    // POST /api/Auth/login via [EnableRateLimiting] — the global 60/min limit does little
+    // to slow down a password-guessing pass against one account.
+    options.AddPolicy(LoginRateLimitPolicy, httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter($"login:{ip}", _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 8,
             Window = TimeSpan.FromMinutes(1),
             QueueLimit = 0
         });
