@@ -11,7 +11,38 @@ env:
   PUBLISH_OUTPUT_DIR: publish
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine .NET SDK version from csproj
+        id: dotnet-version
+        shell: pwsh
+        run: |
+          $csprojContent = Get-Content -Path $env:API_CSPROJ_PATH -Raw
+          if ($csprojContent -notmatch '<TargetFramework>net(?<version>\d+\.\d+)</TargetFramework>') {
+            throw "Could not find <TargetFramework> in $env:API_CSPROJ_PATH"
+          }
+          $sdkVersion = "$($Matches.version).x"
+          Write-Host "Detected .NET SDK version: $sdkVersion"
+          "version=$sdkVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ steps.dotnet-version.outputs.version }}
+
+      - name: Restore dependencies
+        run: dotnet restore MovieReservationSystem.Backend.sln
+
+      - name: Run tests
+        run: dotnet test MovieReservationSystem.Backend.sln --no-restore
+
   deploy:
+    needs: test
     runs-on: windows-latest
 
     steps:

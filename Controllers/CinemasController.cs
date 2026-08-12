@@ -27,6 +27,15 @@ public class CinemasController(ICinemaService cinemaService) : ControllerBase
         return Ok(cinema);
     }
 
+    [AllowAnonymous]
+    [HttpGet("search")]
+    public async Task<ActionResult<IEnumerable<CinemaReadDto>>> Search([FromQuery] string q, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(q)) return Ok(Enumerable.Empty<CinemaReadDto>());
+        var cinemas = await cinemaService.SearchAsync(q, cancellationToken);
+        return Ok(cinemas);
+    }
+
     [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<CinemaReadDto>> Create(CinemaCreateDto dto, CancellationToken cancellationToken)

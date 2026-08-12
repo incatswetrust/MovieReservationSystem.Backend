@@ -1,15 +1,18 @@
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost,1433;Database=moviereservation;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
+    "DefaultConnection": "Server=localhost,1433;Database=moviereservation;User Id=sa;Password=;TrustServerCertificate=True"
   },
   "JwtSettings": {
-    "SecretKey": "d86z4s/ANkpn+Y7vzHoofKu90tWXYe7jdKM4YP3qKLs=!"
+    "SecretKey": ""
   },
   "Authentication": {
     "Google": {
       "ClientId": "",
       "ClientSecret": ""
     }
+  },
+  "Sentry": {
+    "Dsn": ""
   },
   "Logging": {
     "LogLevel": {
@@ -18,4 +21,3 @@
     }
   }
 }
-

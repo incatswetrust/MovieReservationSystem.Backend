@@ -21,6 +21,20 @@ var builder = WebApplication.CreateBuilder(args);
 const string CorsPolicy = "DevCors";
 const string ExternalAuthScheme = "External";
 
+// Error tracking is opt-in: only initializes when Sentry:Dsn is actually configured, so
+// this stays a no-op until someone sets up a Sentry project and provides the DSN (env var
+// Sentry__Dsn in prod, or appsettings.Development.json locally).
+var sentryDsn = builder.Configuration["Sentry:Dsn"];
+if (!string.IsNullOrWhiteSpace(sentryDsn))
+{
+    builder.WebHost.UseSentry(options =>
+    {
+        options.Dsn = sentryDsn;
+        options.Environment = builder.Environment.EnvironmentName;
+        options.TracesSampleRate = 0.2;
+    });
+}
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -136,6 +150,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 
 const string AnonymousRateLimitPolicy = "AnonymousRateLimit";
 const string AuthenticatedRateLimitPolicy = "AuthenticatedRateLimit";
+const string LoginRateLimitPolicy = "LoginRateLimit";
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -194,9 +209,25 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0
         });
     });
+
+    // Stricter, IP-keyed limit on top of the global anonymous limiter, applied only to
+    // POST /api/Auth/login via [EnableRateLimiting] — the global 60/min limit does little
+    // to slow down a password-guessing pass against one account.
+    options.AddPolicy(LoginRateLimitPolicy, httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter($"login:{ip}", _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 8,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
 });
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
+
+builder.Services.AddMemoryCache();
 
 builder.Services.AddSingleton<IGoogleAuthExchangeStore, GoogleAuthExchangeStore>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -207,6 +238,12 @@ builder.Services.AddScoped<IHallImageService, HallImageService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>();
+
+builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
 var app = builder.Build();
 
@@ -235,6 +272,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseRateLimiter();
+
+app.MapHealthChecks("/health");
 
 app.MapControllers();
 

@@ -62,6 +62,16 @@ public class UserService(AppDbContext context, IMapper mapper) : IUserService
             var user = await context.Users.FindAsync(new object?[] { id }, cancellationToken);
             if (user == null) return false;
 
+            if (user.Role == UserRole.Admin)
+            {
+                var otherAdmins = await context.Users
+                    .CountAsync(u => u.Id != id && u.Role == UserRole.Admin, cancellationToken);
+                if (otherAdmins == 0)
+                {
+                    throw new Exception("Cannot delete the last remaining admin account.");
+                }
+            }
+
             context.Users.Remove(user);
             await context.SaveChangesAsync(cancellationToken);
             return true;

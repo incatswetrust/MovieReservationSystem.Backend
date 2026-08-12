@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MovieReservationSystem.Backend.DTOs;
 using MovieReservationSystem.Backend.DTOs.User;
 using MovieReservationSystem.Backend.Services.Interfaces;
@@ -57,6 +58,7 @@ public class AuthController(
     }
 
     [AllowAnonymous]
+    [EnableRateLimiting("LoginRateLimit")]
     [HttpPost("login")]
     public async Task<ActionResult<UserReadDto>> Login(UserLoginDto dto, CancellationToken cancellationToken)
     {

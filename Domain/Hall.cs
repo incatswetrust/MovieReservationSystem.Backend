@@ -1,9 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace MovieReservationSystem.Backend.Domain;
 
 public class Hall
 {
     public int Id { get; set; }
-        
+
+    [MaxLength(200)]
     public string Name { get; set; } = null!;
     public int CinemaId { get; set; }
     public Cinema? Cinema { get; set; }

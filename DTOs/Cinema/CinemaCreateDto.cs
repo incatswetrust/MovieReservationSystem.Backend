@@ -4,7 +4,7 @@ namespace MovieReservationSystem.Backend.DTOs.Cinema;
 
 public class CinemaCreateDto
 {
-    [Required]
+    [Required, MaxLength(200)]
     public string Name { get; set; } = null!;
 
     [MaxLength(500)]
