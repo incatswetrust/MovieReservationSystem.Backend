@@ -111,12 +111,22 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
                     {
                         BookingId = boking.Id,
                         SeatId = seatId,
+                        ShowtimeId = dto.ShowtimeId,
                         Price = 0
                     });
                 }
 
                 context.BookedSeats.AddRange(bookedSeatsToAdd);
-                await context.SaveChangesAsync(cancellationToken);
+
+                try
+                {
+                    await context.SaveChangesAsync(cancellationToken);
+                }
+                catch (DbUpdateException ex) when (IsUniqueSeatViolation(ex))
+                {
+                    throw new Exception("Some of the selected seats were just booked by someone else. Please pick different seats.");
+                }
+
                 var showtime = await context.Showtimes.FindAsync(new object?[] { dto.ShowtimeId }, cancellationToken);
                 if (showtime != null)
                 {
@@ -160,11 +170,23 @@ public class BookingService(AppDbContext context, IMapper mapper) : IBookingServ
             var booking = await context.Bookings.FindAsync(new object?[] { id }, cancellationToken);
             if (booking == null) return false;
             booking.Status = "Canceled";
+
+            // Free the seats immediately: BookedSeats represents current occupancy (and is
+            // what the unique ShowtimeId+SeatId index constrains), not a historical log — the
+            // Booking row itself, kept with Status="Canceled", is the audit trail.
+            var bookedSeats = await context.BookedSeats
+                .Where(bs => bs.BookingId == id)
+                .ToListAsync(cancellationToken);
+            context.BookedSeats.RemoveRange(bookedSeats);
+
             await context.SaveChangesAsync(cancellationToken);
 
-            // _context.Bookings.Remove(booking);
-            // await _context.SaveChangesAsync();
-
             return true;
+        }
+
+        private static bool IsUniqueSeatViolation(DbUpdateException ex)
+        {
+            return ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx
+                   && (sqlEx.Number == 2601 || sqlEx.Number == 2627);
         }
     }

@@ -33,5 +33,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany(u => u.Bookings)
             .HasForeignKey(b => b.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Safety net under the application-level "is this seat already booked" check in
+        // BookingService.CreateAsync, which is vulnerable to a race between two concurrent
+        // bookings for the same seat. Cancelling a booking removes its BookedSeat rows (see
+        // BookingService.CancelAsync), so this only ever constrains currently-held seats.
+        modelBuilder.Entity<BookedSeat>()
+            .HasIndex(bs => new { bs.ShowtimeId, bs.SeatId })
+            .IsUnique();
     }
 }
