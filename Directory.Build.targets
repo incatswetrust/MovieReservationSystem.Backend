@@ -1,0 +1,20 @@
+<Project>
+
+    <!--
+      MovieReservationSystem.Backend.Tests lives underneath the main project's directory
+      (both projects sit at the repo root, so there's no separate "src" folder to keep them
+      apart). SDK-style projects default to recursively globbing every *.cs file under their
+      own directory, so without this exclude, MovieReservationSystem.Backend.csproj would
+      also try to compile the test project's files (and fail, since it doesn't reference
+      xunit/EFCore.Sqlite).
+
+      This file only affects the default item glob, not any explicitly-defined project
+      settings, and is a no-op for MovieReservationSystem.Backend.Tests.csproj itself (the
+      pattern is relative to each importing project's own directory, and the test project has
+      no further nested "MovieReservationSystem.Backend.Tests" subfolder inside itself).
+    -->
+    <ItemGroup>
+        <Compile Remove="MovieReservationSystem.Backend.Tests/**/*.cs" />
+    </ItemGroup>
+
+</Project>
